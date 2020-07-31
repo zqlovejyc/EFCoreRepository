@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.1.4</Version>
+    <Authors>张强</Authors>
+    <Copyright>Copyright © 2018-2020 , 张强 943620963@qq.com</Copyright>
+    <Description>EntityFrameworkCore仓储封装</Description>
+    <PackageReleaseNotes>1.修改IsNullable扩展方法；
+2.升级nuget引用包为最新版本；</PackageReleaseNotes>
+    <PackageId>Zq.EFCoreRepository</PackageId>
+    <PackageLicenseUrl></PackageLicenseUrl>
+    <PackageProjectUrl>https://gitee.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
+    <AssemblyVersion>1.0.1.4</AssemblyVersion>
+    <FileVersion>1.0.1.4</FileVersion>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageIcon>EF.png</PackageIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DocumentationFile>bin\Release\netstandard2.0\EFCoreRepository.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DocumentationFile>bin\Debug\netstandard2.0\EFCoreRepository.xml</DocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Icon\EF.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>
