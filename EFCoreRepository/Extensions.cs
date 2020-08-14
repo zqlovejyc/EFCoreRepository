@@ -550,12 +550,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -586,12 +582,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -624,12 +616,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -660,12 +648,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -698,12 +682,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -734,12 +714,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -772,12 +748,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -808,12 +780,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -846,12 +814,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -882,12 +846,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -921,12 +881,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -958,12 +914,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -995,12 +947,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
@@ -1032,12 +980,8 @@ namespace EFCoreRepository
                 }
                 if (parameters != null)
                 {
-                    foreach (var p in parameters)
+                    foreach (var parameter in parameters)
                     {
-                        var parameter = cmd.CreateParameter();
-                        parameter.DbType = p.DbType;
-                        parameter.ParameterName = p.ParameterName;
-                        parameter.Value = p.Value;
                         cmd.Parameters.Add(parameter);
                     }
                 }
