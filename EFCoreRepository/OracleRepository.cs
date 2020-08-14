@@ -1606,8 +1606,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = this.DbContext.SqlQuery<long>($"SELECT COUNT(1) AS Total FROM ({sql}) T", parameter).FirstOrDefault();
-            var list = this.DbContext.SqlQuery<T>($"SELECT * FROM (SELECT X.*,ROWNUM AS RowNumber FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.RowNumber >= {pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = this.DbContext.SqlQuery<long>($"SELECT COUNT(1) AS TOTAL FROM ({sql}) T", parameter).FirstOrDefault();
+            var list = this.DbContext.SqlQuery<T>($"SELECT * FROM (SELECT X.*,ROWNUM AS ROWNUMBER FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.ROWNUMBER >= {pageSize * (pageIndex - 1) + 1}", parameter);
             return (list?.ToList(), total);
         }
 
@@ -1630,8 +1630,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = this.DbContext.SqlQuery<long>($"{sql} SELECT COUNT(1) AS Total FROM T", parameter).FirstOrDefault();
-            var list = this.DbContext.SqlQuery<T>($"{sql},R AS (SELECT ROWNUM AS RowNumber,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex} {orderField}) SELECT * FROM R WHERE RowNumber>={pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = this.DbContext.SqlQuery<long>($"{sql} SELECT COUNT(1) AS TOTAL FROM T", parameter).FirstOrDefault();
+            var list = this.DbContext.SqlQuery<T>($"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}", parameter);
             return (list?.ToList(), total);
         }
         #endregion
@@ -2095,8 +2095,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = (await this.DbContext.SqlQueryAsync<long>($"SELECT COUNT(1) AS Total FROM ({sql}) T", parameter)).FirstOrDefault();
-            var list = await this.DbContext.SqlQueryAsync<T>($"SELECT * FROM (SELECT X.*,ROWNUM AS RowNumber FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.RowNumber >= {pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = (await this.DbContext.SqlQueryAsync<long>($"SELECT COUNT(1) AS TOTAL FROM ({sql}) T", parameter)).FirstOrDefault();
+            var list = await this.DbContext.SqlQueryAsync<T>($"SELECT * FROM (SELECT X.*,ROWNUM AS ROWNUMBER FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.ROWNUMBER >= {pageSize * (pageIndex - 1) + 1}", parameter);
             return (list?.ToList(), total);
         }
 
@@ -2119,8 +2119,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = (await this.DbContext.SqlQueryAsync<long>($"{sql} SELECT COUNT(1) AS Total FROM T", parameter)).FirstOrDefault();
-            var list = await this.DbContext.SqlQueryAsync<T>($"{sql},R AS (SELECT ROWNUM AS RowNumber,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex} {orderField}) SELECT * FROM R WHERE RowNumber>={pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = (await this.DbContext.SqlQueryAsync<long>($"{sql} SELECT COUNT(1) AS TOTAL FROM T", parameter)).FirstOrDefault();
+            var list = await this.DbContext.SqlQueryAsync<T>($"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}", parameter);
             return (list?.ToList(), total);
         }
         #endregion
@@ -2182,8 +2182,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = this.DbContext.SqlQuery<long>($"SELECT COUNT(1) AS Total FROM ({sql}) T", parameter).FirstOrDefault();
-            var table = this.DbContext.SqlDataTable($"SELECT * FROM (SELECT X.*,ROWNUM AS RowNumber FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.RowNumber >= {pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = this.DbContext.SqlQuery<long>($"SELECT COUNT(1) AS TOTAL FROM ({sql}) T", parameter).FirstOrDefault();
+            var table = this.DbContext.SqlDataTable($"SELECT * FROM (SELECT X.*,ROWNUM AS ROWNUMBER FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.ROWNUMBER >= {pageSize * (pageIndex - 1) + 1}", parameter);
             return (table, total);
         }
 
@@ -2206,8 +2206,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = this.DbContext.SqlQuery<long>($"{sql} SELECT COUNT(1) AS Total FROM T", parameter).FirstOrDefault();
-            var table = this.DbContext.SqlDataTable($"{sql},R AS (SELECT ROWNUM AS RowNumber,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex} {orderField}) SELECT * FROM R WHERE RowNumber>={pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = this.DbContext.SqlQuery<long>($"{sql} SELECT COUNT(1) AS TOTAL FROM T", parameter).FirstOrDefault();
+            var table = this.DbContext.SqlDataTable($"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}", parameter);
             return (table, total);
         }
         #endregion
@@ -2267,8 +2267,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = (await this.DbContext.SqlQueryAsync<long>($"SELECT COUNT(1) AS Total FROM ({sql}) T", parameter)).FirstOrDefault();
-            var table = await this.DbContext.SqlDataTableAsync($"SELECT * FROM (SELECT X.*,ROWNUM AS RowNumber FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.RowNumber >= {pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = (await this.DbContext.SqlQueryAsync<long>($"SELECT COUNT(1) AS TOTAL FROM ({sql}) T", parameter)).FirstOrDefault();
+            var table = await this.DbContext.SqlDataTableAsync($"SELECT * FROM (SELECT X.*,ROWNUM AS ROWNUMBER FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE T.ROWNUMBER >= {pageSize * (pageIndex - 1) + 1}", parameter);
             return (table, total);
         }
 
@@ -2291,8 +2291,8 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
-            var total = (await this.DbContext.SqlQueryAsync<long>($"{sql} SELECT COUNT(1) AS Total FROM T", parameter)).FirstOrDefault();
-            var table = await this.DbContext.SqlDataTableAsync($"{sql},R AS (SELECT ROWNUM AS RowNumber,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex} {orderField}) SELECT * FROM R WHERE RowNumber>={pageSize * (pageIndex - 1) + 1}", parameter);
+            var total = (await this.DbContext.SqlQueryAsync<long>($"{sql} SELECT COUNT(1) AS TOTAL FROM T", parameter)).FirstOrDefault();
+            var table = await this.DbContext.SqlDataTableAsync($"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}", parameter);
             return (table, total);
         }
         #endregion
