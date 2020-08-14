@@ -682,6 +682,46 @@ namespace EFCoreRepository
         }
 
         /// <summary>
+        /// 根据sql语句查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <returns>返回实体</returns>
+        public T FindEntity<T>(string sql)
+        {
+            return this.FindEntity<T>(sql, null);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="parameter">对应参数</param>
+        /// <returns>返回实体</returns>
+        public T FindEntity<T>(string sql, params DbParameter[] parameter)
+        {
+            var query = this.DbContext.SqlQuery<T>(sql, parameter);
+            if (query != null)
+            {
+                return query.FirstOrDefault();
+            }
+            return default(T);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="parameter">对应参数</param>
+        /// <returns>返回实体</returns>
+        public T FindEntity<T>(string sql, params object[] parameter) where T : class
+        {
+            return this.DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefault();
+        }
+
+        /// <summary>
         /// 根据条件查询单个实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
@@ -704,6 +744,19 @@ namespace EFCoreRepository
         {
             return this.DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefault();
         }
+        #endregion
+
+        #region Async
+        /// <summary>
+        /// 根据主键查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>        
+        /// <param name="keyValues">主键值</param>
+        /// <returns>返回实体</returns>
+        public async Task<T> FindEntityAsync<T>(params object[] keyValues) where T : class
+        {
+            return await this.DbContext.Set<T>().FindAsync(keyValues);
+        }
 
         /// <summary>
         /// 根据sql语句查询单个实体
@@ -711,9 +764,9 @@ namespace EFCoreRepository
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="sql">sql语句</param>
         /// <returns>返回实体</returns>
-        public T FindEntityBySql<T>(string sql)
+        public async Task<T> FindEntityAsync<T>(string sql)
         {
-            return this.FindEntityBySql<T>(sql, null);
+            return await this.FindEntityAsync<T>(sql, null);
         }
 
         /// <summary>
@@ -723,9 +776,9 @@ namespace EFCoreRepository
         /// <param name="sql">sql语句</param>
         /// <param name="parameter">对应参数</param>
         /// <returns>返回实体</returns>
-        public T FindEntityBySql<T>(string sql, params DbParameter[] parameter)
+        public async Task<T> FindEntityAsync<T>(string sql, params DbParameter[] parameter)
         {
-            var query = this.DbContext.SqlQuery<T>(sql, parameter);
+            var query = await this.DbContext.SqlQueryAsync<T>(sql, parameter);
             if (query != null)
             {
                 return query.FirstOrDefault();
@@ -740,22 +793,9 @@ namespace EFCoreRepository
         /// <param name="sql">sql语句</param>
         /// <param name="parameter">对应参数</param>
         /// <returns>返回实体</returns>
-        public T FindEntityBySql<T>(string sql, params object[] parameter) where T : class
+        public async Task<T> FindEntityAsync<T>(string sql, params object[] parameter) where T : class
         {
-            return this.DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefault();
-        }
-        #endregion
-
-        #region Async
-        /// <summary>
-        /// 根据主键查询单个实体
-        /// </summary>
-        /// <typeparam name="T">泛型类型</typeparam>        
-        /// <param name="keyValues">主键值</param>
-        /// <returns>返回实体</returns>
-        public async Task<T> FindEntityAsync<T>(params object[] keyValues) where T : class
-        {
-            return await this.DbContext.Set<T>().FindAsync(keyValues);
+            return await this.DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -780,46 +820,6 @@ namespace EFCoreRepository
         public async Task<S> FindEntityAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
             return await this.DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefaultAsync();
-        }
-
-        /// <summary>
-        /// 根据sql语句查询单个实体
-        /// </summary>
-        /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <returns>返回实体</returns>
-        public async Task<T> FindEntityBySqlAsync<T>(string sql)
-        {
-            return await this.FindEntityBySqlAsync<T>(sql, null);
-        }
-
-        /// <summary>
-        /// 根据sql语句查询单个实体
-        /// </summary>
-        /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
-        /// <returns>返回实体</returns>
-        public async Task<T> FindEntityBySqlAsync<T>(string sql, params DbParameter[] parameter)
-        {
-            var query = await this.DbContext.SqlQueryAsync<T>(sql, parameter);
-            if (query != null)
-            {
-                return query.FirstOrDefault();
-            }
-            return default(T);
-        }
-
-        /// <summary>
-        /// 根据sql语句查询单个实体
-        /// </summary>
-        /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
-        /// <returns>返回实体</returns>
-        public async Task<T> FindEntityBySqlAsync<T>(string sql, params object[] parameter) where T : class
-        {
-            return await this.DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefaultAsync();
         }
         #endregion
         #endregion
