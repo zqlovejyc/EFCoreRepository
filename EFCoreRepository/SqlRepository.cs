@@ -60,7 +60,7 @@ namespace EFCoreRepository
         /// <summary>
         /// 超时时长，默认240s
         /// </summary>
-        public virtual int CommandTimeout
+        public int CommandTimeout
         {
             get
             {
@@ -76,7 +76,7 @@ namespace EFCoreRepository
         /// <summary>
         /// 数据库连接字符串
         /// </summary>
-        public virtual string ConnectionString
+        public string ConnectionString
         {
             get
             {
@@ -92,12 +92,12 @@ namespace EFCoreRepository
         /// <summary>
         /// 分页计数语法，默认COUNT(1)
         /// </summary>
-        public virtual string CountSyntax { get; set; } = "COUNT(1)";
+        public string CountSyntax { get; set; } = "COUNT(1)";
 
         /// <summary>
         /// 事务对象
         /// </summary>
-        public virtual DbTransaction Transaction
+        public DbTransaction Transaction
         {
             get
             {
