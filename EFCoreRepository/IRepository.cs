@@ -16,6 +16,7 @@
  */
 #endregion
 
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -47,9 +48,19 @@ namespace EFCoreRepository
         string ConnectionString { get; set; }
 
         /// <summary>
+        /// 分页计数语法，默认COUNT(1)
+        /// </summary>
+        string CountSyntax { get; set; }
+
+        /// <summary>
         /// 事务对象
         /// </summary>
         DbTransaction Transaction { get; set; }
+
+        /// <summary>
+        /// DbContext
+        /// </summary>
+        DbContext DbContext { get; set; }
         #endregion
 
         #region Transaction
