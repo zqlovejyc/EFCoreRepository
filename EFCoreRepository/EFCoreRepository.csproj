@@ -3,20 +3,18 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.1.8</Version>
+    <Version>1.0.1.9</Version>
     <Authors>张强</Authors>
     <Copyright>Copyright © 2018-2020 , 张强 943620963@qq.com</Copyright>
     <Description>EntityFrameworkCore仓储封装</Description>
-    <PackageReleaseNotes>1.新增仓储抽象基类；
-2.仓储接口新增CountSyntax、DbContext属性；
-3.简化不同数据库仓储实现类；
-4.优化分页语法；</PackageReleaseNotes>
+    <PackageReleaseNotes>1.移除SqlRepository仓储virtual属性修饰；
+2.由netstandard2.0升级到netstandard2.1；</PackageReleaseNotes>
     <PackageId>Zq.EFCoreRepository</PackageId>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://gitee.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
-    <AssemblyVersion>1.0.1.8</AssemblyVersion>
-    <FileVersion>1.0.1.8</FileVersion>
-    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <AssemblyVersion>1.0.1.9</AssemblyVersion>
+    <FileVersion>1.0.1.9</FileVersion>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>EF.png</PackageIcon>
   </PropertyGroup>
@@ -26,7 +24,7 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard2.0\EFCoreRepository.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\netstandard2.1\EFCoreRepository.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
