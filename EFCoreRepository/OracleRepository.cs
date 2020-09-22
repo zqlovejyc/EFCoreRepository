@@ -17,7 +17,6 @@
 #endregion
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -36,78 +35,6 @@ namespace EFCoreRepository
     /// </summary>
     public class OracleRepository : BaseRepository, IRepository
     {
-        #region Field
-        /// <summary>
-        /// 私有数据库连接字符串
-        /// </summary>
-        private string connectionString;
-
-        /// <summary>
-        /// 私有事务对象
-        /// </summary>
-        private DbTransaction transaction;
-
-        /// <summary>
-        /// 私有超时时长
-        /// </summary>
-        private int commandTimeout = 240;
-        #endregion
-
-        #region Property
-        /// <summary>
-        /// 超时时长，默认240s
-        /// </summary>
-        public int CommandTimeout
-        {
-            get
-            {
-                return this.commandTimeout;
-            }
-            set
-            {
-                this.commandTimeout = value;
-                this.DbContext.Database.SetCommandTimeout(this.commandTimeout);
-            }
-        }
-
-        /// <summary>
-        /// 数据库连接字符串
-        /// </summary>
-        public string ConnectionString
-        {
-            get
-            {
-                return this.connectionString ?? this.DbContext.Database.GetDbConnection().ConnectionString;
-            }
-            set
-            {
-                this.connectionString = value;
-                this.DbContext.Database.GetDbConnection().ConnectionString = this.connectionString;
-            }
-        }
-
-        /// <summary>
-        /// 分页计数语法，默认COUNT(1)
-        /// </summary>
-        public string CountSyntax { get; set; } = "COUNT(1)";
-
-        /// <summary>
-        /// 事务对象
-        /// </summary>
-        public DbTransaction Transaction
-        {
-            get
-            {
-                return this.transaction ?? this.DbContext.Database.CurrentTransaction?.GetDbTransaction();
-            }
-            set
-            {
-                this.transaction = value;
-                this.DbContext.Database.UseTransaction(this.transaction);
-            }
-        }
-        #endregion
-
         #region Constructor
         /// <summary>
         /// 构造函数
@@ -115,8 +42,8 @@ namespace EFCoreRepository
         /// <param name="context">DbContext实例</param>
         public OracleRepository(DbContext context)
         {
-            this.DbContext = context;
-            this.DbContext.Database.SetCommandTimeout(this.commandTimeout);
+            DbContext = context;
+            DbContext.Database.SetCommandTimeout(CommandTimeout);
         }
         #endregion
 
@@ -128,7 +55,7 @@ namespace EFCoreRepository
         /// <returns>IRepository</returns>
         public IRepository BeginTrans()
         {
-            this.DbContext.Database.BeginTransaction();
+            DbContext.Database.BeginTransaction();
             return this;
         }
 
@@ -137,8 +64,8 @@ namespace EFCoreRepository
         /// </summary>
         public void Commit()
         {
-            this.DbContext.Database.CommitTransaction();
-            this.DbContext.Database.CurrentTransaction?.Dispose();
+            DbContext.Database.CommitTransaction();
+            DbContext.Database.CurrentTransaction?.Dispose();
         }
 
         /// <summary>
@@ -146,8 +73,8 @@ namespace EFCoreRepository
         /// </summary>
         public void Rollback()
         {
-            this.DbContext.Database.RollbackTransaction();
-            this.DbContext.Database.CurrentTransaction?.Dispose();
+            DbContext.Database.RollbackTransaction();
+            DbContext.Database.CurrentTransaction?.Dispose();
         }
 
         /// <summary>
@@ -155,8 +82,8 @@ namespace EFCoreRepository
         /// </summary>
         public void Close()
         {
-            this.DbContext.Database.CloseConnection();
-            this.DbContext.Dispose();
+            DbContext.Database.CloseConnection();
+            DbContext.Dispose();
         }
         #endregion
 
@@ -167,7 +94,7 @@ namespace EFCoreRepository
         /// <returns>IRepository</returns>
         public async Task<IRepository> BeginTransAsync()
         {
-            await this.DbContext.Database.BeginTransactionAsync();
+            await DbContext.Database.BeginTransactionAsync();
             return this;
         }
         #endregion
@@ -199,8 +126,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
 
-            var total = this.DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var list = this.DbContext.SqlQuery<T>(sqlQuery, parameter);
+            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
+            var list = DbContext.SqlQuery<T>(sqlQuery, parameter);
             return (list?.ToList(), total);
         }
 
@@ -228,8 +155,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
 
-            var total = this.DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var list = this.DbContext.SqlQuery<T>(sqlQuery, parameter);
+            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
+            var list = DbContext.SqlQuery<T>(sqlQuery, parameter);
             return (list?.ToList(), total);
         }
         #endregion
@@ -259,8 +186,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
 
-            var total = (await this.DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var list = await this.DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
+            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
+            var list = await DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
             return (list?.ToList(), total);
         }
 
@@ -288,8 +215,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
 
-            var total = (await this.DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var list = await this.DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
+            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
+            var list = await DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
             return (list?.ToList(), total);
         }
         #endregion
@@ -321,8 +248,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
 
-            var total = this.DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var table = this.DbContext.SqlDataTable(sqlQuery, parameter);
+            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
+            var table = DbContext.SqlDataTable(sqlQuery, parameter);
             return (table, total);
         }
 
@@ -350,8 +277,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
 
-            var total = this.DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var table = this.DbContext.SqlDataTable(sqlQuery, parameter);
+            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
+            var table = DbContext.SqlDataTable(sqlQuery, parameter);
             return (table, total);
         }
         #endregion
@@ -381,8 +308,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
 
-            var total = (await this.DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var table = await this.DbContext.SqlDataTableAsync(sqlQuery, parameter);
+            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
+            var table = await DbContext.SqlDataTableAsync(sqlQuery, parameter);
             return (table, total);
         }
 
@@ -410,8 +337,8 @@ namespace EFCoreRepository
 
             var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
 
-            var total = (await this.DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var table = await this.DbContext.SqlDataTableAsync(sqlQuery, parameter);
+            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
+            var table = await DbContext.SqlDataTableAsync(sqlQuery, parameter);
             return (table, total);
         }
         #endregion
@@ -423,7 +350,7 @@ namespace EFCoreRepository
         /// </summary>
         public void Dispose()
         {
-            this.Close();
+            Close();
         }
         #endregion
     }

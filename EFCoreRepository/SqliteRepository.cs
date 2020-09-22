@@ -17,7 +17,6 @@
 #endregion
 
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -37,78 +36,6 @@ namespace EFCoreRepository
     /// </summary>
     public class SqliteRepository : BaseRepository, IRepository
     {
-        #region Field
-        /// <summary>
-        /// 私有数据库连接字符串
-        /// </summary>
-        private string connectionString;
-
-        /// <summary>
-        /// 私有事务对象
-        /// </summary>
-        private DbTransaction transaction;
-
-        /// <summary>
-        /// 私有超时时长
-        /// </summary>
-        private int commandTimeout = 240;
-        #endregion
-
-        #region Property
-        /// <summary>
-        /// 超时时长，默认240s
-        /// </summary>
-        public int CommandTimeout
-        {
-            get
-            {
-                return this.commandTimeout;
-            }
-            set
-            {
-                this.commandTimeout = value;
-                this.DbContext.Database.SetCommandTimeout(this.commandTimeout);
-            }
-        }
-
-        /// <summary>
-        /// 数据库连接字符串
-        /// </summary>
-        public string ConnectionString
-        {
-            get
-            {
-                return this.connectionString ?? this.DbContext.Database.GetDbConnection().ConnectionString;
-            }
-            set
-            {
-                this.connectionString = value;
-                this.DbContext.Database.GetDbConnection().ConnectionString = this.connectionString;
-            }
-        }
-
-        /// <summary>
-        /// 分页计数语法，默认COUNT(1)
-        /// </summary>
-        public string CountSyntax { get; set; } = "COUNT(1)";
-
-        /// <summary>
-        /// 事务对象
-        /// </summary>
-        public DbTransaction Transaction
-        {
-            get
-            {
-                return this.transaction ?? this.DbContext.Database.CurrentTransaction?.GetDbTransaction();
-            }
-            set
-            {
-                this.transaction = value;
-                this.DbContext.Database.UseTransaction(this.transaction);
-            }
-        }
-        #endregion
-
         #region Constructor
         /// <summary>
         /// 构造函数
@@ -116,8 +43,8 @@ namespace EFCoreRepository
         /// <param name="context">DbContext实例</param>
         public SqliteRepository(DbContext context)
         {
-            this.DbContext = context;
-            this.DbContext.Database.SetCommandTimeout(this.commandTimeout);
+            DbContext = context;
+            DbContext.Database.SetCommandTimeout(CommandTimeout);
         }
         #endregion
 
@@ -129,7 +56,7 @@ namespace EFCoreRepository
         /// <returns>IRepository</returns>
         public IRepository BeginTrans()
         {
-            this.DbContext.Database.BeginTransaction();
+            DbContext.Database.BeginTransaction();
             return this;
         }
 
@@ -138,8 +65,8 @@ namespace EFCoreRepository
         /// </summary>
         public void Commit()
         {
-            this.DbContext.Database.CommitTransaction();
-            this.DbContext.Database.CurrentTransaction?.Dispose();
+            DbContext.Database.CommitTransaction();
+            DbContext.Database.CurrentTransaction?.Dispose();
         }
 
         /// <summary>
@@ -147,8 +74,8 @@ namespace EFCoreRepository
         /// </summary>
         public void Rollback()
         {
-            this.DbContext.Database.RollbackTransaction();
-            this.DbContext.Database.CurrentTransaction?.Dispose();
+            DbContext.Database.RollbackTransaction();
+            DbContext.Database.CurrentTransaction?.Dispose();
         }
 
         /// <summary>
@@ -156,8 +83,8 @@ namespace EFCoreRepository
         /// </summary>
         public void Close()
         {
-            this.DbContext.Database.CloseConnection();
-            this.DbContext.Dispose();
+            DbContext.Database.CloseConnection();
+            DbContext.Dispose();
         }
         #endregion
 
@@ -168,7 +95,7 @@ namespace EFCoreRepository
         /// <returns>IRepository</returns>
         public async Task<IRepository> BeginTransAsync()
         {
-            await this.DbContext.Database.BeginTransactionAsync();
+            await DbContext.Database.BeginTransactionAsync();
             return this;
         }
         #endregion
@@ -203,12 +130,12 @@ namespace EFCoreRepository
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
             {
-                var query = this.DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = this.DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -240,12 +167,12 @@ namespace EFCoreRepository
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
             {
-                var query = this.DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = this.DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -279,12 +206,12 @@ namespace EFCoreRepository
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
             {
-                var query = await this.DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = await this.DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -316,12 +243,12 @@ namespace EFCoreRepository
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
             {
-                var query = await this.DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = await this.DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -354,7 +281,7 @@ namespace EFCoreRepository
 
             sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var ds = this.DbContext.SqlDataSet(sqlQuery, parameter);
+            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
 
@@ -382,7 +309,7 @@ namespace EFCoreRepository
 
             sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var ds = this.DbContext.SqlDataSet(sqlQuery, parameter);
+            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
         #endregion
@@ -412,7 +339,7 @@ namespace EFCoreRepository
 
             sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var ds = await this.DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
 
@@ -440,7 +367,7 @@ namespace EFCoreRepository
 
             sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var ds = await this.DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
         #endregion
@@ -452,7 +379,7 @@ namespace EFCoreRepository
         /// </summary>
         public void Dispose()
         {
-            this.Close();
+            Close();
         }
         #endregion
     }

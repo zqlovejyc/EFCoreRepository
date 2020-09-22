@@ -17,6 +17,7 @@
 #endregion
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -37,11 +38,81 @@ namespace EFCoreRepository
     /// </summary>
     public abstract class BaseRepository
     {
+        #region Field
+        /// <summary>
+        /// 私有数据库连接字符串
+        /// </summary>
+        private string connectionString;
+
+        /// <summary>
+        /// 私有事务对象
+        /// </summary>
+        private DbTransaction transaction;
+
+        /// <summary>
+        /// 私有超时时长
+        /// </summary>
+        private int commandTimeout = 240;
+        #endregion
+
         #region Property
         /// <summary>
         /// DbContext
         /// </summary>
         public virtual DbContext DbContext { get; set; }
+
+        /// <summary>
+        /// 分页计数语法，默认COUNT(*)
+        /// </summary>
+        public virtual string CountSyntax { get; set; } = "COUNT(*)";
+
+        /// <summary>
+        /// 超时时长，默认240s
+        /// </summary>
+        public virtual int CommandTimeout
+        {
+            get
+            {
+                return commandTimeout;
+            }
+            set
+            {
+                commandTimeout = value;
+                DbContext.Database.SetCommandTimeout(commandTimeout);
+            }
+        }
+
+        /// <summary>
+        /// 数据库连接字符串
+        /// </summary>
+        public virtual string ConnectionString
+        {
+            get
+            {
+                return connectionString ?? DbContext.Database.GetDbConnection().ConnectionString;
+            }
+            set
+            {
+                connectionString = value;
+                DbContext.Database.GetDbConnection().ConnectionString = connectionString;
+            }
+        }
+
+        /// <summary>
+        /// 事务对象
+        /// </summary>
+        public virtual DbTransaction Transaction
+        {
+            get
+            {
+                return transaction ?? DbContext.Database.CurrentTransaction?.GetDbTransaction();
+            }
+            set
+            {
+                transaction = value;
+                DbContext.Database.UseTransaction(transaction);
+            }
+        }
         #endregion
 
         #region ExecuteBySql
@@ -53,7 +124,7 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int ExecuteBySql(string sql)
         {
-            return this.DbContext.Database.ExecuteSqlRaw(sql);
+            return DbContext.Database.ExecuteSqlRaw(sql);
         }
 
         /// <summary>
@@ -64,7 +135,7 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int ExecuteBySql(string sql, params object[] parameter)
         {
-            return this.DbContext.Database.ExecuteSqlRaw(sql, parameter);
+            return DbContext.Database.ExecuteSqlRaw(sql, parameter);
         }
 
         /// <summary>
@@ -75,7 +146,7 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int ExecuteByProc(string procName, params DbParameter[] parameter)
         {
-            return this.DbContext.ExecuteProc(procName, parameter);
+            return DbContext.ExecuteProc(procName, parameter);
         }
 
         /// <summary>
@@ -87,7 +158,7 @@ namespace EFCoreRepository
         /// <returns></returns>
         public virtual IEnumerable<T> ExecuteByProc<T>(string procName, params DbParameter[] parameter)
         {
-            return this.DbContext.ExecuteProc<T>(procName, parameter);
+            return DbContext.ExecuteProc<T>(procName, parameter);
         }
         #endregion
 
@@ -99,7 +170,7 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> ExecuteBySqlAsync(string sql)
         {
-            return await this.DbContext.Database.ExecuteSqlRawAsync(sql);
+            return await DbContext.Database.ExecuteSqlRawAsync(sql);
         }
 
         /// <summary>
@@ -110,7 +181,7 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> ExecuteBySqlAsync(string sql, params object[] parameter)
         {
-            return await this.DbContext.Database.ExecuteSqlRawAsync(sql, parameter);
+            return await DbContext.Database.ExecuteSqlRawAsync(sql, parameter);
         }
 
         /// <summary>
@@ -121,7 +192,7 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> ExecuteByProcAsync(string procName, params DbParameter[] parameter)
         {
-            return await this.DbContext.ExecuteProcAsync(procName, parameter);
+            return await DbContext.ExecuteProcAsync(procName, parameter);
         }
 
         /// <summary>
@@ -133,7 +204,7 @@ namespace EFCoreRepository
         /// <returns></returns>
         public virtual async Task<IEnumerable<T>> ExecuteByProcAsync<T>(string procName, params DbParameter[] parameter)
         {
-            return await this.DbContext.ExecuteProcAsync<T>(procName, parameter);
+            return await DbContext.ExecuteProcAsync<T>(procName, parameter);
         }
         #endregion
         #endregion
@@ -148,8 +219,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Insert<T>(T entity) where T : class
         {
-            this.DbContext.Set<T>().Add(entity);
-            return this.DbContext.SaveChanges();
+            DbContext.Set<T>().Add(entity);
+            return DbContext.SaveChanges();
         }
 
         /// <summary>
@@ -160,8 +231,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Insert<T>(IEnumerable<T> entities) where T : class
         {
-            this.DbContext.Set<T>().AddRange(entities);
-            return this.DbContext.SaveChanges();
+            DbContext.Set<T>().AddRange(entities);
+            return DbContext.SaveChanges();
         }
         #endregion
 
@@ -174,8 +245,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> InsertAsync<T>(T entity) where T : class
         {
-            await this.DbContext.Set<T>().AddAsync(entity);
-            return await this.DbContext.SaveChangesAsync();
+            await DbContext.Set<T>().AddAsync(entity);
+            return await DbContext.SaveChangesAsync();
         }
 
         /// <summary>
@@ -186,8 +257,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> InsertAsync<T>(IEnumerable<T> entities) where T : class
         {
-            await this.DbContext.Set<T>().AddRangeAsync(entities);
-            return await this.DbContext.SaveChangesAsync();
+            await DbContext.Set<T>().AddRangeAsync(entities);
+            return await DbContext.SaveChangesAsync();
         }
         #endregion
         #endregion
@@ -201,8 +272,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Delete<T>() where T : class
         {
-            var entities = this.FindList<T>();
-            return this.Delete(entities);
+            var entities = FindList<T>();
+            return Delete(entities);
         }
 
         /// <summary>
@@ -213,8 +284,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Delete<T>(T entity) where T : class
         {
-            this.DbContext.Set<T>().Remove(entity);
-            return this.DbContext.SaveChanges();
+            DbContext.Set<T>().Remove(entity);
+            return DbContext.SaveChanges();
         }
 
         /// <summary>
@@ -225,8 +296,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Delete<T>(IEnumerable<T> entities) where T : class
         {
-            this.DbContext.Set<T>().RemoveRange(entities);
-            return this.DbContext.SaveChanges();
+            DbContext.Set<T>().RemoveRange(entities);
+            return DbContext.SaveChanges();
         }
 
         /// <summary>
@@ -237,8 +308,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Delete<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            var entities = this.FindList(predicate);
-            return this.Delete(entities);
+            var entities = FindList(predicate);
+            return Delete(entities);
         }
 
         /// <summary>
@@ -249,10 +320,10 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Delete<T>(params object[] keyValues) where T : class
         {
-            var entity = this.FindEntity<T>(keyValues);
+            var entity = FindEntity<T>(keyValues);
             if (entity != null)
             {
-                return this.Delete(entity);
+                return Delete(entity);
             }
             return 0;
         }
@@ -266,8 +337,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> DeleteAsync<T>() where T : class
         {
-            var entities = await this.FindListAsync<T>();
-            return await this.DeleteAsync(entities);
+            var entities = await FindListAsync<T>();
+            return await DeleteAsync(entities);
         }
 
         /// <summary>
@@ -278,8 +349,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> DeleteAsync<T>(T entity) where T : class
         {
-            this.DbContext.Set<T>().Remove(entity);
-            return await this.DbContext.SaveChangesAsync();
+            DbContext.Set<T>().Remove(entity);
+            return await DbContext.SaveChangesAsync();
         }
 
         /// <summary>
@@ -290,8 +361,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> DeleteAsync<T>(IEnumerable<T> entities) where T : class
         {
-            this.DbContext.Set<T>().RemoveRange(entities);
-            return await this.DbContext.SaveChangesAsync();
+            DbContext.Set<T>().RemoveRange(entities);
+            return await DbContext.SaveChangesAsync();
         }
 
         /// <summary>
@@ -302,8 +373,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> DeleteAsync<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            var entities = await this.FindListAsync(predicate);
-            return await this.DeleteAsync(entities);
+            var entities = await FindListAsync(predicate);
+            return await DeleteAsync(entities);
         }
 
         /// <summary>
@@ -314,10 +385,10 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> DeleteAsync<T>(params object[] keyValues) where T : class
         {
-            var entity = await this.FindEntityAsync<T>(keyValues);
+            var entity = await FindEntityAsync<T>(keyValues);
             if (entity != null)
             {
-                return await this.DeleteAsync(entity);
+                return await DeleteAsync(entity);
             }
             return 0;
         }
@@ -334,8 +405,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual int Update<T>(T entity) where T : class
         {
-            this.DbContext.Set<T>().Attach(entity);
-            var entry = this.DbContext.Entry(entity);
+            DbContext.Set<T>().Attach(entity);
+            var entry = DbContext.Entry(entity);
             var props = entity.GetType().GetProperties();
             foreach (var prop in props)
             {
@@ -345,7 +416,7 @@ namespace EFCoreRepository
                     entry.Property(prop.Name).IsModified = true;
                 }
             }
-            return this.DbContext.SaveChanges();
+            return DbContext.SaveChanges();
         }
 
         /// <summary>
@@ -358,8 +429,8 @@ namespace EFCoreRepository
         {
             foreach (var entity in entities)
             {
-                this.DbContext.Set<T>().Attach(entity);
-                var entry = this.DbContext.Entry(entity);
+                DbContext.Set<T>().Attach(entity);
+                var entry = DbContext.Entry(entity);
                 var props = entity.GetType().GetProperties();
                 foreach (var prop in props)
                 {
@@ -370,7 +441,7 @@ namespace EFCoreRepository
                     }
                 }
             }
-            return this.DbContext.SaveChanges();
+            return DbContext.SaveChanges();
         }
 
         /// <summary>
@@ -383,9 +454,9 @@ namespace EFCoreRepository
         public virtual int Update<T>(Expression<Func<T, bool>> predicate, T entity) where T : class
         {
             var entities = new List<T>();
-            var instances = this.FindList(predicate);
+            var instances = FindList(predicate);
             //设置所有状态为未跟踪状态
-            this.DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
+            DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
             foreach (var instance in instances)
             {
                 var properties = typeof(T).GetProperties();
@@ -402,7 +473,7 @@ namespace EFCoreRepository
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
                 entities.Add(MapperHelper<T, T>.MapTo(entity));
             }
-            return this.Update<T>(entities);
+            return Update<T>(entities);
         }
         #endregion
 
@@ -415,8 +486,8 @@ namespace EFCoreRepository
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> UpdateAsync<T>(T entity) where T : class
         {
-            this.DbContext.Set<T>().Attach(entity);
-            var entry = this.DbContext.Entry(entity);
+            DbContext.Set<T>().Attach(entity);
+            var entry = DbContext.Entry(entity);
             var props = entity.GetType().GetProperties();
             foreach (var prop in props)
             {
@@ -426,7 +497,7 @@ namespace EFCoreRepository
                     entry.Property(prop.Name).IsModified = true;
                 }
             }
-            return await this.DbContext.SaveChangesAsync();
+            return await DbContext.SaveChangesAsync();
         }
 
         /// <summary>
@@ -439,8 +510,8 @@ namespace EFCoreRepository
         {
             foreach (var entity in entities)
             {
-                this.DbContext.Set<T>().Attach(entity);
-                var entry = this.DbContext.Entry(entity);
+                DbContext.Set<T>().Attach(entity);
+                var entry = DbContext.Entry(entity);
                 var props = entity.GetType().GetProperties();
                 foreach (var prop in props)
                 {
@@ -451,7 +522,7 @@ namespace EFCoreRepository
                     }
                 }
             }
-            return await this.DbContext.SaveChangesAsync();
+            return await DbContext.SaveChangesAsync();
         }
 
         /// <summary>
@@ -464,9 +535,9 @@ namespace EFCoreRepository
         public virtual async Task<int> UpdateAsync<T>(Expression<Func<T, bool>> predicate, T entity) where T : class
         {
             var entities = new List<T>();
-            var instances = await this.FindListAsync(predicate);
+            var instances = await FindListAsync(predicate);
             //设置所有状态为未跟踪状态
-            this.DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
+            DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
             foreach (var instance in instances)
             {
                 var properties = typeof(T).GetProperties();
@@ -483,7 +554,7 @@ namespace EFCoreRepository
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
                 entities.Add(MapperHelper<T, T>.MapTo(entity));
             }
-            return await this.UpdateAsync<T>(entities);
+            return await UpdateAsync<T>(entities);
         }
         #endregion
         #endregion
@@ -497,7 +568,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果对象</returns>
         public virtual object FindObject(string sql)
         {
-            return this.FindObject(sql, null);
+            return FindObject(sql, null);
         }
 
         /// <summary>
@@ -508,7 +579,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果对象</returns>
         public virtual object FindObject(string sql, params DbParameter[] parameter)
         {
-            return this.DbContext.SqlQuery<Dictionary<string, object>>(sql, parameter)?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
+            return DbContext.SqlQuery<Dictionary<string, object>>(sql, parameter)?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
         }
         #endregion
 
@@ -520,7 +591,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果对象</returns>
         public virtual async Task<object> FindObjectAsync(string sql)
         {
-            return await this.FindObjectAsync(sql, null);
+            return await FindObjectAsync(sql, null);
         }
 
         /// <summary>
@@ -531,7 +602,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果对象</returns>
         public virtual async Task<object> FindObjectAsync(string sql, params DbParameter[] parameter)
         {
-            return (await this.DbContext.SqlQueryAsync<Dictionary<string, object>>(sql, parameter))?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
+            return (await DbContext.SqlQueryAsync<Dictionary<string, object>>(sql, parameter))?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
         }
         #endregion
         #endregion
@@ -546,7 +617,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual T FindEntity<T>(params object[] keyValues) where T : class
         {
-            return this.DbContext.Set<T>().Find(keyValues);
+            return DbContext.Set<T>().Find(keyValues);
         }
 
         /// <summary>
@@ -557,7 +628,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual T FindEntity<T>(string sql)
         {
-            return this.FindEntity<T>(sql, null);
+            return FindEntity<T>(sql, null);
         }
 
         /// <summary>
@@ -569,7 +640,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual T FindEntity<T>(string sql, params DbParameter[] parameter)
         {
-            var query = this.DbContext.SqlQuery<T>(sql, parameter);
+            var query = DbContext.SqlQuery<T>(sql, parameter);
             if (query != null)
             {
                 return query.FirstOrDefault();
@@ -586,7 +657,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual T FindEntity<T>(string sql, params object[] parameter) where T : class
         {
-            return this.DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefault();
+            return DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefault();
         }
 
         /// <summary>
@@ -597,7 +668,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual T FindEntity<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            return this.DbContext.Set<T>().Where(predicate).FirstOrDefault();
+            return DbContext.Set<T>().Where(predicate).FirstOrDefault();
         }
 
         /// <summary>
@@ -610,7 +681,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual S FindEntity<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
-            return this.DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefault();
+            return DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefault();
         }
         #endregion
 
@@ -623,7 +694,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual async Task<T> FindEntityAsync<T>(params object[] keyValues) where T : class
         {
-            return await this.DbContext.Set<T>().FindAsync(keyValues);
+            return await DbContext.Set<T>().FindAsync(keyValues);
         }
 
         /// <summary>
@@ -634,7 +705,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual async Task<T> FindEntityAsync<T>(string sql)
         {
-            return await this.FindEntityAsync<T>(sql, null);
+            return await FindEntityAsync<T>(sql, null);
         }
 
         /// <summary>
@@ -646,7 +717,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual async Task<T> FindEntityAsync<T>(string sql, params DbParameter[] parameter)
         {
-            var query = await this.DbContext.SqlQueryAsync<T>(sql, parameter);
+            var query = await DbContext.SqlQueryAsync<T>(sql, parameter);
             if (query != null)
             {
                 return query.FirstOrDefault();
@@ -663,7 +734,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual async Task<T> FindEntityAsync<T>(string sql, params object[] parameter) where T : class
         {
-            return await this.DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefaultAsync();
+            return await DbContext.Set<T>().FromSqlRaw(sql, parameter).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -674,7 +745,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual async Task<T> FindEntityAsync<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            return await this.DbContext.Set<T>().Where(predicate).FirstOrDefaultAsync();
+            return await DbContext.Set<T>().Where(predicate).FirstOrDefaultAsync();
         }
 
         /// <summary>
@@ -687,7 +758,7 @@ namespace EFCoreRepository
         /// <returns>返回实体</returns>
         public virtual async Task<S> FindEntityAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
-            return await this.DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefaultAsync();
+            return await DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefaultAsync();
         }
         #endregion
         #endregion
@@ -701,7 +772,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IQueryable<T> IQueryable<T>() where T : class
         {
-            return this.DbContext.Set<T>();
+            return DbContext.Set<T>();
         }
 
         /// <summary>
@@ -713,7 +784,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IQueryable<S> IQueryable<T, S>(Expression<Func<T, S>> selector) where T : class
         {
-            return this.DbContext.Set<T>().Select(selector);
+            return DbContext.Set<T>().Select(selector);
         }
 
         /// <summary>
@@ -724,7 +795,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IQueryable<T> IQueryable<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            return this.DbContext.Set<T>().Where(predicate);
+            return DbContext.Set<T>().Where(predicate);
         }
 
         /// <summary>
@@ -737,7 +808,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IQueryable<T> IQueryable<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -792,7 +863,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IQueryable<S> IQueryable<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
-            return this.DbContext.Set<T>().Where(predicate).Select(selector);
+            return DbContext.Set<T>().Where(predicate).Select(selector);
         }
 
         /// <summary>
@@ -807,7 +878,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IQueryable<S> IQueryable<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -861,7 +932,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<T>> IQueryableAsync<T>() where T : class
         {
-            return await Task.FromResult(this.DbContext.Set<T>());
+            return await Task.FromResult(DbContext.Set<T>());
         }
 
         /// <summary>
@@ -873,7 +944,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<S>> IQueryableAsync<T, S>(Expression<Func<T, S>> selector) where T : class
         {
-            return await Task.FromResult(this.DbContext.Set<T>().Select(selector));
+            return await Task.FromResult(DbContext.Set<T>().Select(selector));
         }
 
         /// <summary>
@@ -884,7 +955,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<T>> IQueryableAsync<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            return await Task.FromResult(this.DbContext.Set<T>().Where(predicate));
+            return await Task.FromResult(DbContext.Set<T>().Where(predicate));
         }
 
         /// <summary>
@@ -897,7 +968,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<T>> IQueryableAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -952,7 +1023,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<S>> IQueryableAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
-            return await Task.FromResult(this.DbContext.Set<T>().Where(predicate).Select(selector));
+            return await Task.FromResult(DbContext.Set<T>().Where(predicate).Select(selector));
         }
 
         /// <summary>
@@ -967,7 +1038,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<S>> IQueryableAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1023,7 +1094,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>() where T : class
         {
-            return this.DbContext.Set<T>().ToList();
+            return DbContext.Set<T>().ToList();
         }
 
         /// <summary>
@@ -1035,7 +1106,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<S> FindList<T, S>(Expression<Func<T, S>> selector) where T : class
         {
-            return this.DbContext.Set<T>().Select(selector).ToList();
+            return DbContext.Set<T>().Select(selector).ToList();
         }
 
         /// <summary>
@@ -1047,7 +1118,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>();
+            var query = DbContext.Set<T>();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1103,7 +1174,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<S> FindList<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>();
+            var query = DbContext.Set<T>();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1156,7 +1227,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            return this.DbContext.Set<T>().Where(predicate).ToList();
+            return DbContext.Set<T>().Where(predicate).ToList();
         }
 
         /// <summary>
@@ -1169,7 +1240,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1224,7 +1295,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<S> FindList<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
-            return this.DbContext.Set<T>().Where(predicate).Select(selector).ToList();
+            return DbContext.Set<T>().Where(predicate).Select(selector).ToList();
         }
 
         /// <summary>
@@ -1239,7 +1310,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<S> FindList<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1292,7 +1363,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(string sql)
         {
-            return this.FindList<T>(sql, null);
+            return FindList<T>(sql, null);
         }
 
         /// <summary>
@@ -1304,7 +1375,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(string sql, params DbParameter[] parameter)
         {
-            return this.DbContext.SqlQuery<T>(sql, parameter);
+            return DbContext.SqlQuery<T>(sql, parameter);
         }
 
         /// <summary>
@@ -1316,7 +1387,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(string sql, params object[] parameter) where T : class
         {
-            return this.DbContext.Set<T>().FromSqlRaw(sql, parameter).ToList();
+            return DbContext.Set<T>().FromSqlRaw(sql, parameter).ToList();
         }
 
         /// <summary>
@@ -1332,7 +1403,7 @@ namespace EFCoreRepository
         public virtual (IEnumerable<T> list, long total) FindList<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
             IOrderedQueryable<T> order = null;
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             var total = query.Count();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
@@ -1394,7 +1465,7 @@ namespace EFCoreRepository
         public virtual (IEnumerable<S> list, long total) FindList<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
             IOrderedQueryable<T> order = null;
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             var total = query.Count();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
@@ -1452,7 +1523,7 @@ namespace EFCoreRepository
         /// <returns>返回集合和总记录数</returns>
         public virtual (List<T> list, long total) FindList<T>(string sql, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            return this.FindList<T>(sql, null, orderField, isAscending, pageSize, pageIndex);
+            return FindList<T>(sql, null, orderField, isAscending, pageSize, pageIndex);
         }
 
         /// <summary>
@@ -1488,7 +1559,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>() where T : class
         {
-            return await this.DbContext.Set<T>().ToListAsync();
+            return await DbContext.Set<T>().ToListAsync();
         }
 
         /// <summary>
@@ -1500,7 +1571,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<S>> FindListAsync<T, S>(Expression<Func<T, S>> selector) where T : class
         {
-            return await this.DbContext.Set<T>().Select(selector).ToListAsync();
+            return await DbContext.Set<T>().Select(selector).ToListAsync();
         }
 
         /// <summary>
@@ -1512,7 +1583,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>();
+            var query = DbContext.Set<T>();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1568,7 +1639,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<S>> FindListAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>();
+            var query = DbContext.Set<T>();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1621,7 +1692,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(Expression<Func<T, bool>> predicate) where T : class
         {
-            return await this.DbContext.Set<T>().Where(predicate).ToListAsync();
+            return await DbContext.Set<T>().Where(predicate).ToListAsync();
         }
 
         /// <summary>
@@ -1634,7 +1705,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1689,7 +1760,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<S>> FindListAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
-            return await this.DbContext.Set<T>().Where(predicate).Select(selector).ToListAsync();
+            return await DbContext.Set<T>().Where(predicate).Select(selector).ToListAsync();
         }
 
         /// <summary>
@@ -1704,7 +1775,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<S>> FindListAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
             {
@@ -1757,7 +1828,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(string sql)
         {
-            return await this.FindListAsync<T>(sql, null);
+            return await FindListAsync<T>(sql, null);
         }
 
         /// <summary>
@@ -1769,7 +1840,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(string sql, params DbParameter[] parameter)
         {
-            return await this.DbContext.SqlQueryAsync<T>(sql, parameter);
+            return await DbContext.SqlQueryAsync<T>(sql, parameter);
         }
 
         /// <summary>
@@ -1781,7 +1852,7 @@ namespace EFCoreRepository
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(string sql, params object[] parameter) where T : class
         {
-            return await this.DbContext.Set<T>().FromSqlRaw(sql, parameter).ToListAsync();
+            return await DbContext.Set<T>().FromSqlRaw(sql, parameter).ToListAsync();
         }
 
         /// <summary>
@@ -1797,7 +1868,7 @@ namespace EFCoreRepository
         public virtual async Task<(IEnumerable<T> list, long total)> FindListAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
             IOrderedQueryable<T> order = null;
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             var total = await query.CountAsync();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
@@ -1859,7 +1930,7 @@ namespace EFCoreRepository
         public virtual async Task<(IEnumerable<S> list, long total)> FindListAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
             IOrderedQueryable<T> order = null;
-            var query = this.DbContext.Set<T>().Where(predicate);
+            var query = DbContext.Set<T>().Where(predicate);
             var total = await query.CountAsync();
             //多个字段排序
             if (orderField.Body is NewExpression newExpression)
@@ -1917,7 +1988,7 @@ namespace EFCoreRepository
         /// <returns>返回集合和总记录数</returns>
         public virtual async Task<(List<T> list, long total)> FindListAsync<T>(string sql, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            return await this.FindListAsync<T>(sql, null, orderField, isAscending, pageSize, pageIndex);
+            return await FindListAsync<T>(sql, null, orderField, isAscending, pageSize, pageIndex);
         }
 
         /// <summary>
@@ -1955,7 +2026,7 @@ namespace EFCoreRepository
         /// <returns>返回DataTable</returns>
         public virtual DataTable FindTable(string sql)
         {
-            return this.FindTable(sql, null);
+            return FindTable(sql, null);
         }
 
         /// <summary>
@@ -1966,7 +2037,7 @@ namespace EFCoreRepository
         /// <returns>返回DataTable</returns>
         public virtual DataTable FindTable(string sql, params DbParameter[] parameter)
         {
-            return this.DbContext.SqlDataTable(sql, parameter);
+            return DbContext.SqlDataTable(sql, parameter);
         }
 
         /// <summary>
@@ -1980,7 +2051,7 @@ namespace EFCoreRepository
         /// <returns>返回DataTable和总记录数</returns>
         public virtual (DataTable table, long total) FindTable(string sql, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            return this.FindTable(sql, null, orderField, isAscending, pageSize, pageIndex);
+            return FindTable(sql, null, orderField, isAscending, pageSize, pageIndex);
         }
 
         /// <summary>
@@ -2016,7 +2087,7 @@ namespace EFCoreRepository
         /// <returns>返回DataTable</returns>
         public virtual async Task<DataTable> FindTableAsync(string sql)
         {
-            return await this.FindTableAsync(sql, null);
+            return await FindTableAsync(sql, null);
         }
 
         /// <summary>
@@ -2027,7 +2098,7 @@ namespace EFCoreRepository
         /// <returns>返回DataTable</returns>
         public virtual async Task<DataTable> FindTableAsync(string sql, params DbParameter[] parameter)
         {
-            return await this.DbContext.SqlDataTableAsync(sql, parameter);
+            return await DbContext.SqlDataTableAsync(sql, parameter);
         }
 
         /// <summary>
@@ -2041,7 +2112,7 @@ namespace EFCoreRepository
         /// <returns>返回DataTable和总记录数</returns>
         public virtual async Task<(DataTable table, long total)> FindTableAsync(string sql, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            return await this.FindTableAsync(sql, null, orderField, isAscending, pageSize, pageIndex);
+            return await FindTableAsync(sql, null, orderField, isAscending, pageSize, pageIndex);
         }
 
         /// <summary>
@@ -2080,7 +2151,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果集</returns>
         public virtual List<List<T>> FindMultiple<T>(string sql)
         {
-            return this.FindMultiple<T>(sql, null);
+            return FindMultiple<T>(sql, null);
         }
 
         /// <summary>
@@ -2092,7 +2163,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果集</returns>
         public virtual List<List<T>> FindMultiple<T>(string sql, params DbParameter[] parameter)
         {
-            return this.DbContext.SqlQueryMultiple<T>(sql, parameter);
+            return DbContext.SqlQueryMultiple<T>(sql, parameter);
         }
         #endregion
 
@@ -2105,7 +2176,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果集</returns>
         public virtual async Task<List<List<T>>> FindMultipleAsync<T>(string sql)
         {
-            return await this.FindMultipleAsync<T>(sql, null);
+            return await FindMultipleAsync<T>(sql, null);
         }
 
         /// <summary>
@@ -2117,7 +2188,7 @@ namespace EFCoreRepository
         /// <returns>返回查询结果集</returns>
         public virtual async Task<List<List<T>>> FindMultipleAsync<T>(string sql, params DbParameter[] parameter)
         {
-            return await this.DbContext.SqlQueryMultipleAsync<T>(sql, parameter);
+            return await DbContext.SqlQueryMultipleAsync<T>(sql, parameter);
         }
         #endregion
         #endregion
