@@ -54,37 +54,10 @@ namespace EFCoreRepository
         /// 开启事务
         /// </summary>
         /// <returns>IRepository</returns>
-        public IRepository BeginTrans()
+        public override IRepository BeginTrans()
         {
             DbContext.Database.BeginTransaction();
             return this;
-        }
-
-        /// <summary>
-        /// 提交事务
-        /// </summary>
-        public void Commit()
-        {
-            DbContext.Database.CommitTransaction();
-            DbContext.Database.CurrentTransaction?.Dispose();
-        }
-
-        /// <summary>
-        /// 回滚事务
-        /// </summary>
-        public void Rollback()
-        {
-            DbContext.Database.RollbackTransaction();
-            DbContext.Database.CurrentTransaction?.Dispose();
-        }
-
-        /// <summary>
-        /// 关闭连接
-        /// </summary>
-        public void Close()
-        {
-            DbContext.Database.CloseConnection();
-            DbContext.Dispose();
         }
         #endregion
 
@@ -93,7 +66,7 @@ namespace EFCoreRepository
         /// 开启事务
         /// </summary>
         /// <returns>IRepository</returns>
-        public async Task<IRepository> BeginTransAsync()
+        public override async Task<IRepository> BeginTransAsync()
         {
             await DbContext.Database.BeginTransactionAsync();
             return this;
