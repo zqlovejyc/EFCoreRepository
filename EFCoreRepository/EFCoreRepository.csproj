@@ -3,18 +3,16 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.2.1</Version>
+    <Version>1.0.2.2</Version>
     <Authors>张强</Authors>
     <Copyright>Copyright © 2018-2020 , 张强 943620963@qq.com</Copyright>
     <Description>EntityFrameworkCore仓储封装</Description>
-    <PackageReleaseNotes>1.修改ServiceLifetime枚举值顺序；
-2.移除冗余Nuget包引用；
-3.仓储新增ExecuteTrans、ExecuteTransAsync方法及其实现；</PackageReleaseNotes>
+    <PackageReleaseNotes>1.优化ExecuteTrans，添加对是否已开启事务进行判断；</PackageReleaseNotes>
     <PackageId>Zq.EFCoreRepository</PackageId>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://gitee.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
-    <AssemblyVersion>1.0.2.1</AssemblyVersion>
-    <FileVersion>1.0.2.1</FileVersion>
+    <AssemblyVersion>1.0.2.2</AssemblyVersion>
+    <FileVersion>1.0.2.2</FileVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>ef.png</PackageIcon>
