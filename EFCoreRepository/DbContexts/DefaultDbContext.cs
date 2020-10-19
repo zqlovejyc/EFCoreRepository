@@ -16,6 +16,8 @@
  */
 #endregion
 
+using EFCoreRepository.Extensions;
+using EFCoreRepository.Helpers;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
@@ -25,7 +27,7 @@ using System.Reflection;
 * [Date] 2020-09-23
 * [Describe] 默认DbContext
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.DbContexts
 {
     /// <summary>
     /// 默认DbContext

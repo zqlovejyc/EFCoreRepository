@@ -19,14 +19,23 @@
 /****************************
 * [Author] 张强
 * [Date] 2020-09-23
-* [Describe] 实体抽象基类
+* [Describe] 排序方式
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Enums
 {
     /// <summary>
-    /// 实体抽象基类
+    /// 排序方式
     /// </summary>
-    public abstract class BaseEntity
+    public enum OrderType
     {
+        /// <summary>
+        /// 升序
+        /// </summary>
+        Ascending,
+
+        /// <summary>
+        /// 降序
+        /// </summary>
+        Descending
     }
 }

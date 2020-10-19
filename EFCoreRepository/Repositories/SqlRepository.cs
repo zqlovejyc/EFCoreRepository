@@ -16,6 +16,7 @@
  */
 #endregion
 
+using EFCoreRepository.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -26,22 +27,22 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 /****************************
 * [Author] 张强
-* [Date] 2018-09-27
-* [Describe] Sqlite仓储实现类
+* [Date] 2018-09-16
+* [Describe] Sqlserver仓储实现类
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Repositories
 {
     /// <summary>
-    /// Sqlite仓储实现类
+    /// Sqlserver仓储实现类
     /// </summary>
-    public class SqliteRepository : BaseRepository, IRepository
+    public class SqlRepository : BaseRepository, IRepository
     {
         #region Constructor
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="context">DbContext实例</param>
-        public SqliteRepository(DbContext context)
+        public SqlRepository(DbContext context)
         {
             DbContext = context;
             DbContext.Database.SetCommandTimeout(CommandTimeout);
@@ -99,10 +100,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) AS T;";
+            var sqlQuery = $"SELECT {CountSyntax} AS [TOTAL] FROM ({sql}) AS T;";
 
-            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM ({sql}) AS T) AS N WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
@@ -136,10 +146,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS [TOTAL] FROM T;";
 
-            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"{sql} SELECT * FROM T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"{sql},R AS (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM T) SELECT * FROM R WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
@@ -175,10 +194,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) AS T;";
+            var sqlQuery = $"SELECT {CountSyntax} AS [TOTAL] FROM ({sql}) AS T;";
 
-            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM ({sql}) AS T) AS N WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
@@ -212,10 +240,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS [TOTAL] FROM T;";
 
-            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"{sql} SELECT * FROM T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"{sql},R AS (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM T) SELECT * FROM R WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var type = typeof(T);
             if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
@@ -253,10 +290,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) AS T;";
+            var sqlQuery = $"SELECT {CountSyntax} AS [TOTAL] FROM ({sql}) AS T;";
 
-            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM ({sql}) AS T) AS N WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var ds = DbContext.SqlDataSet(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
@@ -281,10 +327,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS [TOTAL] FROM T;";
 
-            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"{sql} SELECT * FROM T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"{sql},R AS (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM T) SELECT * FROM R WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var ds = DbContext.SqlDataSet(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
@@ -311,10 +366,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) AS T;";
+            var sqlQuery = $"SELECT {CountSyntax} AS [TOTAL] FROM ({sql}) AS T;";
 
-            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"SELECT * FROM (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM ({sql}) AS T) AS N WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
@@ -339,10 +403,19 @@ namespace EFCoreRepository
                 else
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
+            else
+            {
+                orderField = "ORDER BY (SELECT 0)";
+            }
 
-            var sqlQuery = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS [TOTAL] FROM T;";
 
-            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
+            var serverVersion = int.Parse(DbContext.Database.GetDbConnection().ServerVersion.Split('.')[0]);
+
+            if (serverVersion > 10)
+                sqlQuery += $"{sql} SELECT * FROM T {orderField} OFFSET {((pageIndex - 1) * pageSize)} ROWS FETCH NEXT {pageSize} ROWS ONLY;";
+            else
+                sqlQuery += $"{sql},R AS (SELECT ROW_NUMBER() OVER ({orderField}) AS [ROWNUMBER], * FROM T) SELECT * FROM R WHERE [ROWNUMBER] BETWEEN {((pageIndex - 1) * pageSize + 1)} AND {(pageIndex * pageSize)};";
 
             var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));

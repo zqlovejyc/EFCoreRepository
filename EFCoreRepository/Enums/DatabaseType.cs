@@ -19,26 +19,10 @@
 /****************************
 * [Author] 张强
 * [Date] 2020-09-23
-* [Describe] 枚举
+* [Describe] 数据库类型
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Enums
 {
-    /// <summary>
-    /// 排序方式
-    /// </summary>
-    public enum OrderType
-    {
-        /// <summary>
-        /// 升序
-        /// </summary>
-        Ascending,
-
-        /// <summary>
-        /// 降序
-        /// </summary>
-        Descending
-    }
-
     /// <summary>
     /// 数据库类型
     /// </summary>
@@ -68,26 +52,5 @@ namespace EFCoreRepository
         /// PostgreSql数据库类型
         /// </summary>
         PostgreSql,
-    }
-
-    /// <summary>
-    /// 服务生命周期
-    /// </summary>
-    public enum ServiceLifetime
-    {
-        /// <summary>
-        /// 单例
-        /// </summary>
-        Singleton,
-
-        /// <summary>
-        /// 作用域
-        /// </summary>
-        Scoped,
-
-        /// <summary>
-        /// 瞬时
-        /// </summary>
-        Transient
     }
 }

@@ -16,6 +16,7 @@
  */
 #endregion
 
+using EFCoreRepository.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -27,21 +28,21 @@ using System.Threading.Tasks;
 /****************************
 * [Author] 张强
 * [Date] 2018-09-27
-* [Describe] PostgreSQL仓储实现类
+* [Describe] Sqlite仓储实现类
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Repositories
 {
     /// <summary>
-    /// PostgreSQL仓储实现类
+    /// Sqlite仓储实现类
     /// </summary>
-    public class NpgsqlRepository : BaseRepository, IRepository
+    public class SqliteRepository : BaseRepository, IRepository
     {
         #region Constructor
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="context">DbContext实例</param>
-        public NpgsqlRepository(DbContext context)
+        public SqliteRepository(DbContext context)
         {
             DbContext = context;
             DbContext.Database.SetCommandTimeout(CommandTimeout);

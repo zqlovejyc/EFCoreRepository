@@ -16,6 +16,7 @@
  */
 #endregion
 
+using EFCoreRepository.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -27,21 +28,21 @@ using System.Threading.Tasks;
 /****************************
 * [Author] 张强
 * [Date] 2018-09-27
-* [Describe] Oracle仓储实现类
+* [Describe] MySql仓储实现类
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Repositories
 {
     /// <summary>
-    /// Oracle仓储实现类
+    /// MySql仓储实现类
     /// </summary>
-    public class OracleRepository : BaseRepository, IRepository
+    public class MySqlRepository : BaseRepository, IRepository
     {
         #region Constructor
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="context">DbContext实例</param>
-        public OracleRepository(DbContext context)
+        public MySqlRepository(DbContext context)
         {
             DbContext = context;
             DbContext.Database.SetCommandTimeout(CommandTimeout);
@@ -100,13 +101,21 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
+            var sqlQuery = $"SELECT {CountSyntax} AS `TOTAL` FROM ({sql}) AS T;";
 
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var list = DbContext.SqlQuery<T>(sqlQuery, parameter);
-            return (list?.ToList(), total);
+            var type = typeof(T);
+            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            {
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
         }
 
         /// <summary>
@@ -129,13 +138,21 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS `TOTAL` FROM T;";
 
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var list = DbContext.SqlQuery<T>(sqlQuery, parameter);
-            return (list?.ToList(), total);
+            var type = typeof(T);
+            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            {
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
         }
         #endregion
 
@@ -160,13 +177,21 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
+            var sqlQuery = $"SELECT {CountSyntax} AS `TOTAL` FROM ({sql}) AS T;";
 
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var list = await DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
-            return (list?.ToList(), total);
+            var type = typeof(T);
+            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
         }
 
         /// <summary>
@@ -189,13 +214,21 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS `TOTAL` FROM T;";
 
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var list = await DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
-            return (list?.ToList(), total);
+            var type = typeof(T);
+            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
         }
         #endregion
         #endregion
@@ -222,13 +255,12 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
+            var sqlQuery = $"SELECT {CountSyntax} AS `TOTAL` FROM ({sql}) AS T;";
 
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var table = DbContext.SqlDataTable(sqlQuery, parameter);
-            return (table, total);
+            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
 
         /// <summary>
@@ -251,13 +283,12 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS `TOTAL` FROM T;";
 
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
-            var table = DbContext.SqlDataTable(sqlQuery, parameter);
-            return (table, total);
+            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
         #endregion
 
@@ -282,13 +313,12 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
+            var sqlQuery = $"SELECT {CountSyntax} AS `TOTAL` FROM ({sql}) AS T;";
 
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var table = await DbContext.SqlDataTableAsync(sqlQuery, parameter);
-            return (table, total);
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
 
         /// <summary>
@@ -311,13 +341,12 @@ namespace EFCoreRepository
                     orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
             }
 
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+            var sqlQuery = $"{sql} SELECT {CountSyntax} AS `TOTAL` FROM T;";
 
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
-            var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
-            var table = await DbContext.SqlDataTableAsync(sqlQuery, parameter);
-            return (table, total);
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
         #endregion
         #endregion

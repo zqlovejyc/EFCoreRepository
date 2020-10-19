@@ -16,7 +16,9 @@
  */
 #endregion
 
-using EFCoreRepository;
+using EFCoreRepository.DbContexts;
+using EFCoreRepository.Extensions;
+using EFCoreRepository.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;

@@ -16,6 +16,7 @@
  */
 #endregion
 
+using EFCoreRepository.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -26,7 +27,7 @@ using System.Reflection;
 * [Date] 2020-09-23
 * [Describe] Assembly工具类
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Helpers
 {
     /// <summary>
     /// Assembly工具类
@@ -88,7 +89,7 @@ namespace EFCoreRepository
                         typeArray = assembly.GetTypes();
                     }
                     catch
-                    { 
+                    {
                     }
 
                     if (typeArray?.Length > 0)

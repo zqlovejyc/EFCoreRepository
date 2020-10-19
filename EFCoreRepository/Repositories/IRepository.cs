@@ -16,6 +16,7 @@
  */
 #endregion
 
+using EFCoreRepository.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -29,7 +30,7 @@ using System.Threading.Tasks;
 * [Date] 2018-07-23
 * [Describe] 数据操作仓储接口
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Repositories
 {
     /// <summary>
     /// 数据操作仓储接口

@@ -24,7 +24,7 @@ using System.Linq.Expressions;
 * [Date] 2019-03-27
 * [Describe] 泛型映射工具类
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Helpers
 {
     /// <summary>
     /// 泛型映射工具类

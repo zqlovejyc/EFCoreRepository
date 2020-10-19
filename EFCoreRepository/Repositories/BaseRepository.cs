@@ -16,6 +16,9 @@
  */
 #endregion
 
+using EFCoreRepository.Enums;
+using EFCoreRepository.Extensions;
+using EFCoreRepository.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -31,7 +34,7 @@ using System.Threading.Tasks;
 * [Date] 2020-09-17
 * [Describe] 数据操作仓储抽象基类
 * **************************/
-namespace EFCoreRepository
+namespace EFCoreRepository.Repositories
 {
     /// <summary>
     /// 数据操作仓储抽象基类
