@@ -3,16 +3,17 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.2.2</Version>
+    <Version>1.0.2.3</Version>
     <Authors>张强</Authors>
     <Copyright>Copyright © 2018-2020 , 张强 943620963@qq.com</Copyright>
     <Description>EntityFrameworkCore仓储封装</Description>
-    <PackageReleaseNotes>1.优化ExecuteTrans，添加对是否已开启事务进行判断；</PackageReleaseNotes>
+    <PackageReleaseNotes>1.优化BeginTrans，精简代码；
+2.调整代码结构及命名空间；</PackageReleaseNotes>
     <PackageId>Zq.EFCoreRepository</PackageId>
     <PackageLicenseUrl></PackageLicenseUrl>
     <PackageProjectUrl>https://gitee.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
-    <AssemblyVersion>1.0.2.2</AssemblyVersion>
-    <FileVersion>1.0.2.2</FileVersion>
+    <AssemblyVersion>1.0.2.3</AssemblyVersion>
+    <FileVersion>1.0.2.3</FileVersion>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageIcon>ef.png</PackageIcon>
