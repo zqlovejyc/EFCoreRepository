@@ -1,46 +1,49 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.2.3</Version>
-    <Authors>张强</Authors>
-    <Copyright>Copyright © 2018-2020 , 张强 943620963@qq.com</Copyright>
-    <Description>EntityFrameworkCore仓储封装</Description>
-    <PackageReleaseNotes>1.优化BeginTrans，精简代码；
-2.调整代码结构及命名空间；</PackageReleaseNotes>
-    <PackageId>Zq.EFCoreRepository</PackageId>
-    <PackageLicenseUrl></PackageLicenseUrl>
-    <PackageProjectUrl>https://gitee.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
-    <AssemblyVersion>1.0.2.3</AssemblyVersion>
-    <FileVersion>1.0.2.3</FileVersion>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
-    <PackageIcon>ef.png</PackageIcon>
-    <LangVersion>8.0</LangVersion>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>netstandard2.0;netstandard2.1;net5.0</TargetFrameworks>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <Version>1.1.0</Version>
+        <Authors>张强</Authors>
+        <Copyright>Copyright © 2018-2020 , 张强 943620963@qq.com</Copyright>
+        <Description>EntityFrameworkCore仓储封装</Description>
+        <PackageReleaseNotes>1.升级支持net5.0；</PackageReleaseNotes>
+        <PackageId>Zq.EFCoreRepository</PackageId>
+        <PackageLicenseUrl></PackageLicenseUrl>
+        <PackageProjectUrl>https://gitee.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
+        <AssemblyVersion>1.1.0.0</AssemblyVersion>
+        <FileVersion>1.1.0.0</FileVersion>
+        <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+        <PackageIcon>ef.png</PackageIcon>
+        <LangVersion>8.0</LangVersion>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DocumentationFile>bin\Release\netstandard2.0\EFCoreRepository.xml</DocumentationFile>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DocumentationFile>bin\Release\netstandard2.0\EFCoreRepository.xml</DocumentationFile>
+    </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <DocumentationFile>bin\Debug\netstandard2.1\EFCoreRepository.xml</DocumentationFile>
-  </PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+        <DocumentationFile>bin\Release\netstandard2.1\EFCoreRepository.xml</DocumentationFile>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.8" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
-    <PackageReference Include="Oracle.EntityFrameworkCore" Version="3.19.80" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.2" />
-  </ItemGroup>
+    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+        <DocumentationFile>bin\Release\net5.0\EFCoreRepository.xml</DocumentationFile>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="Icon\ef.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.10" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.10" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="3.1.4" />
+        <PackageReference Include="Oracle.EntityFrameworkCore" Version="3.19.80" />
+        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Icon\ef.png">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
 
 </Project>
