@@ -17,6 +17,9 @@
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageIcon>ef.png</PackageIcon>
         <LangVersion>8.0</LangVersion>
+        <PackageTags>EntityFrameCore;Repository</PackageTags>
+        <RepositoryUrl>https://gitee.com/zqlovejyc/EFCoreRepository</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
