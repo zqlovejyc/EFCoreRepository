@@ -20,6 +20,7 @@
         <PackageTags>entity-framework-core;repository</PackageTags>
         <RepositoryUrl>https://gitee.com/zqlovejyc/EFCoreRepository</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
+        <LangVersion>latest</LangVersion>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
