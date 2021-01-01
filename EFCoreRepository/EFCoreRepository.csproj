@@ -5,7 +5,7 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <Version>1.1.0</Version>
         <Authors>张强</Authors>
-        <Copyright>Copyright © 2018-2020 , 张强 943620963@qq.com</Copyright>
+        <Copyright>Copyright © 2018-2021 , 张强 943620963@qq.com</Copyright>
         <Description>EntityFrameworkCore仓储封装</Description>
         <PackageReleaseNotes>1.升级支持net5.0；</PackageReleaseNotes>
         <PackageId>Zq.EFCoreRepository</PackageId>
