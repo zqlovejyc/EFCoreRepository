@@ -7,7 +7,7 @@
 
 <div align="center">
 
-[![star](https://gitee.com/zqlovejyc/EFCoreRepository/badge/star.svg)](https://gitee.com/zqlovejyc/EFCoreRepository/stargazers) [![fork](https://gitee.com/zqlovejyc/EFCoreRepository/badge/fork.svg)](https://gitee.com/zqlovejyc/EFCoreRepository/members) [![GitHub stars](https://img.shields.io/github/stars/zqlovejyc/EFCoreRepository?logo=github)](https://github.com/zqlovejyc/EFCoreRepository/stargazers) [![GitHub forks](https://img.shields.io/github/forks/zqlovejyc/EFCoreRepository?logo=github)](https://github.com/zqlovejyc/EFCoreRepository/network) [![GitHub license](https://img.shields.io/badge/license-Apache2-yellow)](https://gitee.com/zqlovejyc/EFCoreRepository/blob/master/LICENSE) [![nuget](https://img.shields.io/nuget/v/Zq.EFCoreRepository.svg?cacheSeconds=10800)](https://www.nuget.org/packages/Zq.EFCoreRepository)
+[![star](https://gitee.com/zqlovejyc/EFCoreRepository/badge/star.svg)](https://gitee.com/zqlovejyc/EFCoreRepository/stargazers) [![fork](https://gitee.com/zqlovejyc/EFCoreRepository/badge/fork.svg)](https://gitee.com/zqlovejyc/EFCoreRepository/members) [![GitHub stars](https://img.shields.io/github/stars/zqlovejyc/EFCoreRepository?logo=github)](https://github.com/zqlovejyc/EFCoreRepository/stargazers) [![GitHub forks](https://img.shields.io/github/forks/zqlovejyc/EFCoreRepository?logo=github)](https://github.com/zqlovejyc/EFCoreRepository/network) [![GitHub license](https://img.shields.io/badge/license-Apache2-yellow)](https://github.com/zqlovejyc/EFCoreRepository/blob/master/LICENSE) [![nuget](https://img.shields.io/nuget/v/Zq.EFCoreRepository.svg?cacheSeconds=10800)](https://www.nuget.org/packages/Zq.EFCoreRepository)
 
 </div>
 
