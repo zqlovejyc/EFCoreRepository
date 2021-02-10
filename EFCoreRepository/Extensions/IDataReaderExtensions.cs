@@ -302,26 +302,29 @@ namespace EFCoreRepository.Extensions
             if (@this?.IsClosed == false)
             {
                 var type = typeof(T);
-                if (type.Name.Contains("IDictionary`2"))
-                {
-                    list = @this.ToDictionaries()?.Select(o => o as IDictionary<string, object>).ToList() as List<T>;
-                }
-                else if (type.Name.Contains("Dictionary`2"))
+                if (type.AssignableTo(typeof(Dictionary<,>)))
                 {
                     list = @this.ToDictionaries()?.ToList() as List<T>;
                 }
-                else if (type.IsClass && type.Name != "Object" && type.Name != "String")
+                else if (type.AssignableTo(typeof(IDictionary<,>)))
+                {
+                    list = @this.ToDictionaries()?.Select(o => o as IDictionary<string, object>).ToList() as List<T>;
+                }
+                else if (type.IsClass && !type.IsDynamicOrObjectType() && !type.IsStringType())
                 {
                     list = @this.ToEntities<T>()?.ToList() as List<T>;
                 }
                 else
                 {
-                    var result = @this.ToDynamics()?.ToList();
-                    list = result as List<T>;
-                    if (list == null)
+                    var result = @this.ToDynamics();
+                    if (result != null && result.Any())
                     {
-                        //适合查询单个字段的结果集
-                        list = result.Select(o => (T)(o as IDictionary<string, object>)?.Select(x => x.Value).FirstOrDefault()).ToList();
+                        list = result.ToList() as List<T>;
+                        if (list == null && (type.IsStringType() || type.IsValueType))
+                        {
+                            //适合查询单个字段的结果集
+                            list = result.Select(o => (T)(o as IDictionary<string, object>).Select(x => x.Value).FirstOrDefault()).ToList();
+                        }
                     }
                 }
             }
@@ -345,7 +348,7 @@ namespace EFCoreRepository.Extensions
                     do
                     {
                         #region IDictionary
-                        if (type.Name.Contains("Dictionary`2"))
+                        if (type.IsDictionaryType())
                         {
                             var list = new List<Dictionary<string, object>>();
                             while (@this.Read())
@@ -357,7 +360,7 @@ namespace EFCoreRepository.Extensions
                                 }
                                 list.Add(dic);
                             }
-                            if (type.Name.Contains("IDictionary`2"))
+                            if (!type.AssignableTo(typeof(Dictionary<,>)))
                             {
                                 result.Add(list.Select(o => o as IDictionary<string, object>).ToList() as List<T>);
                             }
@@ -369,7 +372,7 @@ namespace EFCoreRepository.Extensions
                         #endregion
 
                         #region Class T
-                        else if (type.IsClass && type.Name != "Object" && type.Name != "String")
+                        else if (type.IsClass && !type.IsDynamicOrObjectType() && !type.IsStringType())
                         {
                             var list = new List<T>();
                             var fields = new List<string>();
@@ -410,10 +413,10 @@ namespace EFCoreRepository.Extensions
                                 list.Add(row);
                             }
                             var item = list as List<T>;
-                            if (item == null)
+                            if (item == null && (type.IsStringType() || type.IsValueType))
                             {
                                 //适合查询单个字段的结果集
-                                item = list.Select(o => (T)(o as IDictionary<string, object>)?.Select(x => x.Value).FirstOrDefault()).ToList();
+                                item = list.Select(o => (T)(o as IDictionary<string, object>).Select(x => x.Value).FirstOrDefault()).ToList();
                             }
                             result.Add(item);
                         }
