@@ -62,10 +62,10 @@ namespace EFCoreRepository.Extensions
             if (@this?.Count > 0)
             {
                 dt = new DataTable(typeof(T).Name);
-                var typeName = typeof(T).Name;
-                var first = @this.FirstOrDefault();
-                var firstTypeName = first.GetType().Name;
-                if (typeName.Contains("Dictionary`2") || (typeName == "Object" && (firstTypeName == "DapperRow" || firstTypeName == "DynamicRow")))
+                var type = typeof(T);
+                var first = @this.First();
+                var firstType = first.GetType();
+                if (type.IsDictionaryType() || (type.IsDynamicOrObjectType() && firstType.IsDictionaryType()))
                 {
                     var dic = first as IDictionary<string, object>;
                     dt.Columns.AddRange(dic.Select(o => new DataColumn(o.Key, o.Value?.GetType().GetCoreType() ?? typeof(object))).ToArray());
@@ -77,7 +77,7 @@ namespace EFCoreRepository.Extensions
                 }
                 else
                 {
-                    var props = typeName == "Object" ? first.GetType().GetProperties() : typeof(T).GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
+                    var props = type.IsDynamicOrObjectType() ? firstType.GetProperties() : typeof(T).GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
                     foreach (var prop in props)
                     {
                         dt.Columns.Add(prop.Name, prop?.PropertyType.GetCoreType() ?? typeof(object));
