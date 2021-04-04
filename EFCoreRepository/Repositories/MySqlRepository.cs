@@ -106,7 +106,7 @@ namespace EFCoreRepository.Repositories
             sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
             var type = typeof(T);
-            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
                 var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
@@ -143,7 +143,7 @@ namespace EFCoreRepository.Repositories
             sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
             var type = typeof(T);
-            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
                 var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
@@ -182,7 +182,7 @@ namespace EFCoreRepository.Repositories
             sqlQuery += $"SELECT * FROM ({sql}) AS T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
             var type = typeof(T);
-            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
                 var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
@@ -219,7 +219,7 @@ namespace EFCoreRepository.Repositories
             sqlQuery += $"{sql} SELECT * FROM T {orderField} LIMIT {pageSize} OFFSET {(pageSize * (pageIndex - 1))};";
 
             var type = typeof(T);
-            if (!type.Name.Contains("Dictionary`2") && type.IsClass && type.Name != "Object" && type.Name != "String")
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
                 var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
