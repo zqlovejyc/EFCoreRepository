@@ -118,6 +118,24 @@ namespace EFCoreRepository.Repositories
         }
         #endregion
 
+        #region SaveChanges
+        #region Sync
+        /// <summary>
+        /// 保存更改
+        /// </summary>
+        /// <returns></returns>
+        public int SaveChanges() => DbContext.SaveChanges();
+        #endregion
+
+        #region Async
+        /// <summary>
+        /// 保存更改
+        /// </summary>
+        /// <returns></returns>
+        public async Task<int> SaveChangesAsync() => await DbContext.SaveChangesAsync();
+        #endregion
+        #endregion
+
         #region Transaction
         #region Sync
         /// <summary>
@@ -388,10 +406,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entity">要插入的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Insert<T>(T entity) where T : class
+        public virtual int Insert<T>(T entity, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().Add(entity);
+
+            if (!saveChanges)
+                return 0;
+
             return DbContext.SaveChanges();
         }
 
@@ -400,10 +423,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entities">要插入的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Insert<T>(IEnumerable<T> entities) where T : class
+        public virtual int Insert<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().AddRange(entities);
+
+            if (!saveChanges)
+                return 0;
+
             return DbContext.SaveChanges();
         }
         #endregion
@@ -414,10 +442,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entity">要插入的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> InsertAsync<T>(T entity) where T : class
+        public virtual async Task<int> InsertAsync<T>(T entity, bool saveChanges = true) where T : class
         {
             await DbContext.Set<T>().AddAsync(entity);
+
+            if (!saveChanges)
+                return 0;
+
             return await DbContext.SaveChangesAsync();
         }
 
@@ -426,10 +459,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entities">要插入的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> InsertAsync<T>(IEnumerable<T> entities) where T : class
+        public virtual async Task<int> InsertAsync<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
             await DbContext.Set<T>().AddRangeAsync(entities);
+
+            if (!saveChanges)
+                return 0;
+
             return await DbContext.SaveChangesAsync();
         }
         #endregion
@@ -442,10 +480,10 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <returns>返回受影响行数</returns>
-        public virtual int Delete<T>() where T : class
+        public virtual int Delete<T>(bool saveChanges = true) where T : class
         {
             var entities = FindList<T>();
-            return Delete(entities);
+            return Delete(entities, saveChanges);
         }
 
         /// <summary>
@@ -453,10 +491,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entity">要删除的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Delete<T>(T entity) where T : class
+        public virtual int Delete<T>(T entity, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().Remove(entity);
+
+            if (!saveChanges)
+                return 0;
+
             return DbContext.SaveChanges();
         }
 
@@ -465,10 +508,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entities">要删除的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Delete<T>(IEnumerable<T> entities) where T : class
+        public virtual int Delete<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().RemoveRange(entities);
+
+            if (!saveChanges)
+                return 0;
+
             return DbContext.SaveChanges();
         }
 
@@ -477,27 +525,28 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="predicate">条件</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Delete<T>(Expression<Func<T, bool>> predicate) where T : class
+        public virtual int Delete<T>(Expression<Func<T, bool>> predicate, bool saveChanges = true) where T : class
         {
             var entities = FindList(predicate);
-            return Delete(entities);
+            return Delete(entities, saveChanges);
         }
 
         /// <summary>
         /// 根据主键删除实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <param name="keyValues">主键值</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Delete<T>(params object[] keyValues) where T : class
+        public virtual int Delete<T>(bool saveChanges = true, params object[] keyValues) where T : class
         {
             var entity = FindEntity<T>(keyValues);
-            if (entity != null)
-            {
-                return Delete(entity);
-            }
-            return 0;
+            if (entity == null)
+                return 0;
+
+            return Delete(entity, saveChanges);
         }
         #endregion
 
@@ -506,11 +555,12 @@ namespace EFCoreRepository.Repositories
         /// 删除全部
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> DeleteAsync<T>() where T : class
+        public virtual async Task<int> DeleteAsync<T>(bool saveChanges = true) where T : class
         {
             var entities = await FindListAsync<T>();
-            return await DeleteAsync(entities);
+            return await DeleteAsync(entities, saveChanges);
         }
 
         /// <summary>
@@ -518,10 +568,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entity">要删除的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> DeleteAsync<T>(T entity) where T : class
+        public virtual async Task<int> DeleteAsync<T>(T entity, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().Remove(entity);
+
+            if (!saveChanges)
+                return 0;
+
             return await DbContext.SaveChangesAsync();
         }
 
@@ -530,10 +585,15 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entities">要删除的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> DeleteAsync<T>(IEnumerable<T> entities) where T : class
+        public virtual async Task<int> DeleteAsync<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().RemoveRange(entities);
+
+            if (!saveChanges)
+                return 0;
+
             return await DbContext.SaveChangesAsync();
         }
 
@@ -542,27 +602,28 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="predicate">条件</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> DeleteAsync<T>(Expression<Func<T, bool>> predicate) where T : class
+        public virtual async Task<int> DeleteAsync<T>(Expression<Func<T, bool>> predicate, bool saveChanges = true) where T : class
         {
             var entities = await FindListAsync(predicate);
-            return await DeleteAsync(entities);
+            return await DeleteAsync(entities, saveChanges);
         }
 
         /// <summary>
         /// 根据主键删除实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <param name="keyValues">主键值</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> DeleteAsync<T>(params object[] keyValues) where T : class
+        public virtual async Task<int> DeleteAsync<T>(bool saveChanges = true, params object[] keyValues) where T : class
         {
             var entity = await FindEntityAsync<T>(keyValues);
-            if (entity != null)
-            {
-                return await DeleteAsync(entity);
-            }
-            return 0;
+            if (entity == null)
+                return 0;
+
+            return await DeleteAsync(entity, saveChanges);
         }
         #endregion
         #endregion
@@ -574,12 +635,14 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entity">要更新的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Update<T>(T entity) where T : class
+        public virtual int Update<T>(T entity, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().Attach(entity);
             var entry = DbContext.Entry(entity);
             var props = entity.GetType().GetProperties();
+
             foreach (var prop in props)
             {
                 //非null且非PrimaryKey
@@ -588,6 +651,10 @@ namespace EFCoreRepository.Repositories
                     entry.Property(prop.Name).IsModified = true;
                 }
             }
+
+            if (!saveChanges)
+                return 0;
+
             return DbContext.SaveChanges();
         }
 
@@ -596,8 +663,9 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entities">要更新的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Update<T>(IEnumerable<T> entities) where T : class
+        public virtual int Update<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
             foreach (var entity in entities)
             {
@@ -613,6 +681,10 @@ namespace EFCoreRepository.Repositories
                     }
                 }
             }
+
+            if (!saveChanges)
+                return 0;
+
             return DbContext.SaveChanges();
         }
 
@@ -622,13 +694,15 @@ namespace EFCoreRepository.Repositories
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="predicate">条件</param>
         /// <param name="entity">要更新的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int Update<T>(Expression<Func<T, bool>> predicate, T entity) where T : class
+        public virtual int Update<T>(Expression<Func<T, bool>> predicate, T entity, bool saveChanges = true) where T : class
         {
             var entities = new List<T>();
             var instances = FindList(predicate);
             //设置所有状态为未跟踪状态
             DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
+
             foreach (var instance in instances)
             {
                 var properties = typeof(T).GetProperties();
@@ -645,7 +719,8 @@ namespace EFCoreRepository.Repositories
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
                 entities.Add(MapperHelper<T, T>.MapTo(entity));
             }
-            return Update<T>(entities);
+
+            return Update<T>(entities, saveChanges);
         }
         #endregion
 
@@ -655,12 +730,14 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entity">要更新的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> UpdateAsync<T>(T entity) where T : class
+        public virtual async Task<int> UpdateAsync<T>(T entity, bool saveChanges = true) where T : class
         {
             DbContext.Set<T>().Attach(entity);
             var entry = DbContext.Entry(entity);
             var props = entity.GetType().GetProperties();
+
             foreach (var prop in props)
             {
                 //非null且非PrimaryKey
@@ -669,6 +746,10 @@ namespace EFCoreRepository.Repositories
                     entry.Property(prop.Name).IsModified = true;
                 }
             }
+
+            if (!saveChanges)
+                return 0;
+
             return await DbContext.SaveChangesAsync();
         }
 
@@ -677,8 +758,9 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="entities">要更新的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> UpdateAsync<T>(IEnumerable<T> entities) where T : class
+        public virtual async Task<int> UpdateAsync<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
             foreach (var entity in entities)
             {
@@ -694,6 +776,10 @@ namespace EFCoreRepository.Repositories
                     }
                 }
             }
+
+            if (!saveChanges)
+                return 0;
+
             return await DbContext.SaveChangesAsync();
         }
 
@@ -703,13 +789,15 @@ namespace EFCoreRepository.Repositories
         /// <typeparam name="T">泛型类型</typeparam>
         /// <param name="predicate">条件</param>
         /// <param name="entity">要更新的实体</param>
+        /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> UpdateAsync<T>(Expression<Func<T, bool>> predicate, T entity) where T : class
+        public virtual async Task<int> UpdateAsync<T>(Expression<Func<T, bool>> predicate, T entity, bool saveChanges = true) where T : class
         {
             var entities = new List<T>();
             var instances = await FindListAsync(predicate);
             //设置所有状态为未跟踪状态
             DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
+
             foreach (var instance in instances)
             {
                 var properties = typeof(T).GetProperties();
@@ -726,7 +814,8 @@ namespace EFCoreRepository.Repositories
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
                 entities.Add(MapperHelper<T, T>.MapTo(entity));
             }
-            return await UpdateAsync<T>(entities);
+
+            return await UpdateAsync<T>(entities, saveChanges);
         }
         #endregion
         #endregion
