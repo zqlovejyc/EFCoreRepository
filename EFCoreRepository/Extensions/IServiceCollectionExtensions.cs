@@ -101,7 +101,7 @@ namespace EFCoreRepository.Extensions
                     },
                     DatabaseType.MySql => new MySqlRepository(new DefaultDbContext(x =>
                     {
-                        x.UseMySql(config[1]);
+                        x.UseMySQL(config[1]);
                         dbContextOptions?.Invoke(DatabaseType.MySql, x);
                     }))
                     {

@@ -45,9 +45,9 @@
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="MySql.EntityFrameworkCore" Version="5.0.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.2" />
         <PackageReference Include="Oracle.EntityFrameworkCore" Version="5.21.1" />
-        <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="3.2.4" />
     </ItemGroup>
 
     <ItemGroup>
