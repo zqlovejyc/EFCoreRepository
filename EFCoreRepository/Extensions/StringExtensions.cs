@@ -35,10 +35,8 @@ namespace EFCoreRepository.Extensions
         /// </summary>
         /// <param name="this">待验证的字符串</param>
         /// <returns>bool</returns>
-        public static bool IsNullOrEmpty(this string @this)
-        {
-            return string.IsNullOrEmpty(@this);
-        }
+        public static bool IsNullOrEmpty(this string @this) =>
+            string.IsNullOrEmpty(@this);
         #endregion
 
         #region IsNullOrWhiteSpace
@@ -47,10 +45,8 @@ namespace EFCoreRepository.Extensions
         /// </summary>
         /// <param name="this">待验证的字符串</param>
         /// <returns>bool</returns>
-        public static bool IsNullOrWhiteSpace(this string @this)
-        {
-            return string.IsNullOrWhiteSpace(@this);
-        }
+        public static bool IsNullOrWhiteSpace(this string @this) =>
+            string.IsNullOrWhiteSpace(@this);
         #endregion
 
         #region SqlInject
@@ -64,6 +60,7 @@ namespace EFCoreRepository.Extensions
         {
             if (@this.IsNullOrEmpty())
                 return false;
+
             return Regex.IsMatch(@this, pattern, RegexOptions.IgnoreCase);
         }
 
@@ -77,6 +74,7 @@ namespace EFCoreRepository.Extensions
         {
             if (@this.IsNullOrEmpty())
                 return @this;
+
             return Regex.Replace(@this, pattern, "");
         }
         #endregion
@@ -89,10 +87,8 @@ namespace EFCoreRepository.Extensions
         /// <param name="value">目标字符串，例如：判断是否包含ASC或DESC为@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)"</param>
         /// <param name="options">匹配模式</param>
         /// <returns></returns>
-        public static bool Contains(this string @this, string value, RegexOptions options)
-        {
-            return Regex.IsMatch(@this, value, options);
-        }
+        public static bool Contains(this string @this, string value, RegexOptions options) =>
+            Regex.IsMatch(@this, value, options);
         #endregion
 
         #region Substring
@@ -107,6 +103,7 @@ namespace EFCoreRepository.Extensions
         {
             var start = (lastIndexOf ? @this.LastIndexOf(separator) : @this.IndexOf(separator)) + separator.Length;
             var length = @this.Length - start;
+
             return @this.Substring(start, length);
         }
         #endregion

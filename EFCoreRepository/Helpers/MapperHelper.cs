@@ -36,7 +36,7 @@ namespace EFCoreRepository.Helpers
         /// <summary>
         /// 私有静态字段
         /// </summary>
-        private static readonly Func<T, F> map = MapProvider();
+        private static readonly Func<T, F> _map = MapProvider();
 
         /// <summary>
         /// 私有方法
@@ -50,6 +50,7 @@ namespace EFCoreRepository.Helpers
             {
                 if (!item.CanWrite)
                     continue;
+
                 var property = Expression.Property(parameterExpression, typeof(T).GetProperty(item.Name));
                 var memberBinding = Expression.Bind(item, property);
                 memberBindingList.Add(memberBinding);
@@ -64,9 +65,6 @@ namespace EFCoreRepository.Helpers
         /// </summary>
         /// <param name="entity">待映射的对象</param>
         /// <returns>目标类型对象</returns>
-        public static F MapTo(T entity)
-        {
-            return map(entity);
-        }
+        public static F MapTo(T entity) => _map(entity);
     }
 }

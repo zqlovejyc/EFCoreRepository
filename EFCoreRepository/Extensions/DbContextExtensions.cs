@@ -44,27 +44,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static IEnumerable<T> SqlQuery<T>(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return cmd.ExecuteReader().ToList<T>();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return cmd.ExecuteReader().ToList<T>();
         }
 
         /// <summary>
@@ -76,27 +73,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static async Task<IEnumerable<T>> SqlQueryAsync<T>(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return (await cmd.ExecuteReaderAsync()).ToList<T>();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return (await cmd.ExecuteReaderAsync()).ToList<T>();
         }
         #endregion
 
@@ -110,27 +104,23 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static List<List<T>> SqlQueryMultiple<T>(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return cmd.ExecuteReader().ToLists<T>();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return cmd.ExecuteReader().ToLists<T>();
         }
 
         /// <summary>
@@ -142,27 +132,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static async Task<List<List<T>>> SqlQueryMultipleAsync<T>(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return (await cmd.ExecuteReaderAsync()).ToLists<T>();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return (await cmd.ExecuteReaderAsync()).ToLists<T>();
         }
         #endregion
 
@@ -176,27 +163,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static DataTable SqlDataTable(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return cmd.ExecuteReader().ToDataTable();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return cmd.ExecuteReader().ToDataTable();
         }
 
         /// <summary>
@@ -208,27 +192,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static async Task<DataTable> SqlDataTableAsync(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return (await cmd.ExecuteReaderAsync()).ToDataTable();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return (await cmd.ExecuteReaderAsync()).ToDataTable();
         }
         #endregion
 
@@ -242,27 +223,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static DataSet SqlDataSet(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return cmd.ExecuteReader().ToDataSet();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return cmd.ExecuteReader().ToDataSet();
         }
 
         /// <summary>
@@ -274,27 +252,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static async Task<DataSet> SqlDataSetAsync(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return (await cmd.ExecuteReaderAsync()).ToDataSet();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return (await cmd.ExecuteReaderAsync()).ToDataSet();
         }
         #endregion
 
@@ -308,27 +283,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static int ExecuteSql(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return cmd.ExecuteNonQuery();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return cmd.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -340,27 +312,24 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static async Task<int> ExecuteSqlAsync(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return await cmd.ExecuteNonQueryAsync();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return await cmd.ExecuteNonQueryAsync();
         }
         #endregion
 
@@ -374,28 +343,25 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static int ExecuteProc(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                cmd.CommandType = CommandType.StoredProcedure;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return cmd.ExecuteNonQuery();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return cmd.ExecuteNonQuery();
         }
 
         /// <summary>
@@ -407,28 +373,25 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static IEnumerable<T> ExecuteProc<T>(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                cmd.CommandType = CommandType.StoredProcedure;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return cmd.ExecuteReader().ToList<T>();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return cmd.ExecuteReader().ToList<T>();
         }
 
         /// <summary>
@@ -440,28 +403,25 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static async Task<int> ExecuteProcAsync(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                cmd.CommandType = CommandType.StoredProcedure;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return await cmd.ExecuteNonQueryAsync();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return await cmd.ExecuteNonQueryAsync();
         }
 
         /// <summary>
@@ -473,28 +433,25 @@ namespace EFCoreRepository.Extensions
         /// <returns></returns>
         public static async Task<IEnumerable<T>> ExecuteProcAsync<T>(this DbContext db, string sql, params DbParameter[] parameters)
         {
-            using (var cmd = db.Database.GetDbConnection().CreateCommand())
+            using var cmd = db.Database.GetDbConnection().CreateCommand();
+
+            cmd.CommandText = sql;
+            cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
+            cmd.CommandType = CommandType.StoredProcedure;
+
+            if (cmd.Connection.State != ConnectionState.Open)
+                cmd.Connection.Open();
+
+            if (db.Database.CurrentTransaction != null)
+                cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
+
+            if (parameters != null)
             {
-                cmd.CommandText = sql;
-                cmd.CommandTimeout = db.Database.GetCommandTimeout() ?? 240;
-                cmd.CommandType = CommandType.StoredProcedure;
-                if (cmd.Connection.State != ConnectionState.Open)
-                {
-                    cmd.Connection.Open();
-                }
-                if (db.Database.CurrentTransaction != null)
-                {
-                    cmd.Transaction = db.Database.CurrentTransaction.GetDbTransaction();
-                }
-                if (parameters != null)
-                {
-                    foreach (var parameter in parameters)
-                    {
-                        cmd.Parameters.Add(parameter);
-                    }
-                }
-                return (await cmd.ExecuteReaderAsync()).ToList<T>();
+                foreach (var parameter in parameters)
+                    cmd.Parameters.Add(parameter);
             }
+
+            return (await cmd.ExecuteReaderAsync()).ToList<T>();
         }
         #endregion
     }

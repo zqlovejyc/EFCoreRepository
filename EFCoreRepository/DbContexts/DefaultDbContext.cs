@@ -80,6 +80,7 @@ namespace EFCoreRepository.DbContexts
                 {
                     if (modelBuilder.Model.FindEntityType(entityType) != null)
                         continue;
+
                     modelBuilder.Model.AddEntityType(entityType);
                 }
             }

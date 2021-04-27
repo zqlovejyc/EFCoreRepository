@@ -35,10 +35,8 @@ namespace EFCoreRepository.Extensions
         /// </summary>
         /// <param name="this">object对象</param>
         /// <returns>bool</returns>
-        public static bool IsNull(this object @this)
-        {
-            return @this == null || @this == DBNull.Value;
-        }
+        public static bool IsNull(this object @this) =>
+            @this == null || @this == DBNull.Value;
         #endregion
 
         #region ToSafeValue
@@ -48,10 +46,8 @@ namespace EFCoreRepository.Extensions
         /// <param name="this">object对象</param>
         /// <param name="type">type</param>
         /// <returns>object</returns>
-        public static object ToSafeValue(this object @this, Type type)
-        {
-            return @this == null ? null : Convert.ChangeType(@this, type.GetCoreType());
-        }
+        public static object ToSafeValue(this object @this, Type type) =>
+            @this == null ? null : Convert.ChangeType(@this, type.GetCoreType());
         #endregion
     }
 }

@@ -79,8 +79,8 @@ namespace EFCoreRepository.Helpers
         {
             var types = new List<Type>();
             var assemblies = GetAssemblies(path, filter);
+
             if (assemblies?.Count() > 0)
-            {
                 foreach (var assembly in assemblies)
                 {
                     Type[] typeArray = null;
@@ -93,11 +93,9 @@ namespace EFCoreRepository.Helpers
                     }
 
                     if (typeArray?.Length > 0)
-                    {
                         types.AddRange(typeArray);
-                    }
                 }
-            }
+
             return types;
         }
     }

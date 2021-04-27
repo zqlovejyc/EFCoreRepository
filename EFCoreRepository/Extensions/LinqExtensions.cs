@@ -1273,6 +1273,7 @@ namespace EFCoreRepository.Extensions
             var type = typeof(T);
             var arg = Expression.Parameter(type, "x");
             Expression expr = arg;
+
             foreach (var prop in props)
             {
                 // use reflection (not ComponentModel) to mirror LINQ
@@ -1280,6 +1281,7 @@ namespace EFCoreRepository.Extensions
                 expr = Expression.Property(expr, pi);
                 type = pi.PropertyType;
             }
+
             var delegateType = typeof(Func<,>).MakeGenericType(typeof(T), type);
             var lambda = Expression.Lambda(delegateType, expr, arg);
             var result = typeof(Queryable).GetMethods().Single(
@@ -1289,6 +1291,7 @@ namespace EFCoreRepository.Extensions
                 && method.GetParameters().Length == 2)
               .MakeGenericMethod(typeof(T), type)
               .Invoke(null, new object[] { source, lambda });
+
             return (IOrderedQueryable<T>)result;
         }
         #endregion
