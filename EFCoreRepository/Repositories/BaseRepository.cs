@@ -639,8 +639,11 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual int Update<T>(T entity, bool saveChanges = true) where T : class
         {
-            DbContext.Set<T>().Attach(entity);
             var entry = DbContext.Entry(entity);
+
+            if (entry.State == EntityState.Detached)
+                DbContext.Attach(entity);
+
             var props = entity.GetType().GetProperties();
 
             foreach (var prop in props)
@@ -669,8 +672,10 @@ namespace EFCoreRepository.Repositories
         {
             foreach (var entity in entities)
             {
-                DbContext.Set<T>().Attach(entity);
                 var entry = DbContext.Entry(entity);
+                if (entry.State == EntityState.Detached)
+                    DbContext.Attach(entity);
+
                 var props = entity.GetType().GetProperties();
                 foreach (var prop in props)
                 {
@@ -700,6 +705,7 @@ namespace EFCoreRepository.Repositories
         {
             var entities = new List<T>();
             var instances = FindList(predicate);
+
             //设置所有状态为未跟踪状态
             DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
 
