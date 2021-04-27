@@ -650,9 +650,7 @@ namespace EFCoreRepository.Repositories
             {
                 //非null且非PrimaryKey
                 if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                {
                     entry.Property(prop.Name).IsModified = true;
-                }
             }
 
             if (!saveChanges)
@@ -681,9 +679,7 @@ namespace EFCoreRepository.Repositories
                 {
                     //非null且非PrimaryKey
                     if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                    {
                         entry.Property(prop.Name).IsModified = true;
-                    }
                 }
             }
 
@@ -712,9 +708,10 @@ namespace EFCoreRepository.Repositories
             foreach (var instance in instances)
             {
                 var properties = typeof(T).GetProperties();
+
                 foreach (var property in properties)
                 {
-                    var isKey = property.GetCustomAttributes(typeof(KeyAttribute), false).Count() > 0;
+                    var isKey = property.GetCustomAttributes(typeof(KeyAttribute), false).Any();
                     if (isKey)
                     {
                         var keyVal = property.GetValue(instance);
@@ -722,6 +719,7 @@ namespace EFCoreRepository.Repositories
                             property.SetValue(entity, keyVal);
                     }
                 }
+
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
                 entities.Add(MapperHelper<T, T>.MapTo(entity));
             }
@@ -748,9 +746,7 @@ namespace EFCoreRepository.Repositories
             {
                 //非null且非PrimaryKey
                 if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                {
                     entry.Property(prop.Name).IsModified = true;
-                }
             }
 
             if (!saveChanges)
@@ -777,9 +773,7 @@ namespace EFCoreRepository.Repositories
                 {
                     //非null且非PrimaryKey
                     if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                    {
                         entry.Property(prop.Name).IsModified = true;
-                    }
                 }
             }
 
@@ -801,15 +795,17 @@ namespace EFCoreRepository.Repositories
         {
             var entities = new List<T>();
             var instances = await FindListAsync(predicate);
+
             //设置所有状态为未跟踪状态
             DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
 
             foreach (var instance in instances)
             {
                 var properties = typeof(T).GetProperties();
+
                 foreach (var property in properties)
                 {
-                    var isKey = property.GetCustomAttributes(typeof(KeyAttribute), false).Count() > 0;
+                    var isKey = property.GetCustomAttributes(typeof(KeyAttribute), false).Any();
                     if (isKey)
                     {
                         var keyVal = property.GetValue(instance);
@@ -817,6 +813,7 @@ namespace EFCoreRepository.Repositories
                             property.SetValue(entity, keyVal);
                     }
                 }
+
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
                 entities.Add(MapperHelper<T, T>.MapTo(entity));
             }
