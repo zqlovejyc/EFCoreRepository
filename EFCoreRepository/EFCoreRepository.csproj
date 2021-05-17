@@ -8,16 +8,23 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>1.1.0</Version>
+        <Version>1.1.1</Version>
         <Authors>张强</Authors>
         <Copyright>Copyright © 2018-2021 , 张强 943620963@qq.com</Copyright>
         <Description>EntityFrameworkCore仓储封装</Description>
-        <PackageReleaseNotes>1.升级支持net5.0；</PackageReleaseNotes>
+        <PackageReleaseNotes>1.添加SourceLink；
+2.优化ToDataTable、FindList扩展方法；
+3.仓储新增SaveChanges接口；Insert、Delete、Update新增saveChanges可选参数，默认保存更改；
+4.优化MapProvider、BuildIOrderedQueryable；
+5.仓储新增Queue接口及实现；
+6.重命名BeginTrans -&gt; BeginTransaction，ExecuteTrans -&gt; ExecuteTransaction；
+7.新增部分异步事务接口；
+8.升级nuget依赖引用包到最新版本；</PackageReleaseNotes>
         <PackageId>Zq.EFCoreRepository</PackageId>
         <PackageLicenseUrl></PackageLicenseUrl>
         <PackageProjectUrl>https://github.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
-        <AssemblyVersion>1.1.0.0</AssemblyVersion>
-        <FileVersion>1.1.0.0</FileVersion>
+        <AssemblyVersion>1.1.1.0</AssemblyVersion>
+        <FileVersion>1.1.1.0</FileVersion>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageIcon>ef.png</PackageIcon>
