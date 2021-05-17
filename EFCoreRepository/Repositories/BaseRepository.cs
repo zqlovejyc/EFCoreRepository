@@ -22,6 +22,7 @@ using EFCoreRepository.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
@@ -39,23 +40,23 @@ namespace EFCoreRepository.Repositories
     /// <summary>
     /// 数据操作仓储抽象基类
     /// </summary>
-    public abstract class BaseRepository
+    public abstract class BaseRepository : IRepository
     {
         #region Field
         /// <summary>
         /// 私有数据库连接字符串
         /// </summary>
-        private string connectionString;
+        private string _connectionString;
 
         /// <summary>
         /// 私有事务对象
         /// </summary>
-        private DbTransaction transaction;
+        private DbTransaction _transaction;
 
         /// <summary>
         /// 私有超时时长
         /// </summary>
-        private int commandTimeout = 240;
+        private int _commandTimeout = 240;
         #endregion
 
         #region Property
@@ -76,12 +77,12 @@ namespace EFCoreRepository.Repositories
         {
             get
             {
-                return commandTimeout;
+                return _commandTimeout;
             }
             set
             {
-                commandTimeout = value;
-                DbContext.Database.SetCommandTimeout(commandTimeout);
+                _commandTimeout = value;
+                DbContext.Database.SetCommandTimeout(_commandTimeout);
             }
         }
 
@@ -92,12 +93,12 @@ namespace EFCoreRepository.Repositories
         {
             get
             {
-                return connectionString ?? DbContext.Database.GetDbConnection().ConnectionString;
+                return _connectionString ?? DbContext.Database.GetDbConnection().ConnectionString;
             }
             set
             {
-                connectionString = value;
-                DbContext.Database.GetDbConnection().ConnectionString = connectionString;
+                _connectionString = value;
+                DbContext.Database.GetDbConnection().ConnectionString = _connectionString;
             }
         }
 
@@ -108,14 +109,130 @@ namespace EFCoreRepository.Repositories
         {
             get
             {
-                return transaction ?? DbContext.Database.CurrentTransaction?.GetDbTransaction();
+                return _transaction ?? DbContext.Database.CurrentTransaction?.GetDbTransaction();
             }
             set
             {
-                transaction = value;
-                DbContext.Database.UseTransaction(transaction);
+                _transaction = value;
+                DbContext.Database.UseTransaction(_transaction);
             }
         }
+        #endregion
+
+        #region Constructor
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        /// <param name="context">DbContext实例</param>
+        public BaseRepository(DbContext context)
+        {
+            DbContext = context;
+            DbContext.Database.SetCommandTimeout(CommandTimeout);
+        }
+        #endregion
+
+        #region Queue
+        #region Sync
+        /// <summary>
+        /// 同步委托队列(Queue)
+        /// </summary>
+        public virtual ConcurrentQueue<Func<IRepository, bool>> Queue { get; } = new();
+
+        /// <summary>
+        /// 加入同步委托队列(Queue)
+        /// </summary>
+        /// <param name="func">自定义委托</param>
+        /// <returns></returns>
+        public virtual void AddQueue(Func<IRepository, bool> func)
+        {
+            Queue.Enqueue(func);
+        }
+
+        /// <summary>
+        /// 保存同步委托队列(Queue)
+        /// </summary>
+        /// <param name="transaction">是否开启事务</param>
+        /// <returns></returns>
+        public virtual bool SaveQueue(bool transaction = true)
+        {
+            try
+            {
+                if (Queue.IsEmpty)
+                    return false;
+
+                if (transaction)
+                    BeginTransaction();
+
+                var res = true;
+
+                while (!Queue.IsEmpty && Queue.TryDequeue(out var func))
+                    res = res && func(this);
+
+                if (transaction)
+                    Commit();
+
+                return res;
+            }
+            catch (Exception)
+            {
+                if (transaction)
+                    Rollback();
+
+                throw;
+            }
+        }
+        #endregion
+
+        #region Async
+        /// <summary>
+        /// 异步委托队列(AsyncQueue)
+        /// </summary>
+        public virtual ConcurrentQueue<Func<IRepository, Task<bool>>> AsyncQueue { get; } = new();
+
+        /// <summary>
+        /// 加入异步委托队列(AsyncQueue)
+        /// </summary>
+        /// <param name="func">自定义委托</param>
+        /// <returns></returns>
+        public virtual void AddQueue(Func<IRepository, Task<bool>> func)
+        {
+            AsyncQueue.Enqueue(func);
+        }
+
+        /// <summary>
+        /// 保存异步委托队列(AsyncQueue)
+        /// </summary>
+        /// <param name="transaction">是否开启事务</param>
+        /// <returns></returns>
+        public virtual async Task<bool> SaveQueueAsync(bool transaction = true)
+        {
+            try
+            {
+                if (AsyncQueue.IsEmpty)
+                    return false;
+
+                if (transaction)
+                    await BeginTransactionAsync();
+
+                var res = true;
+
+                while (!AsyncQueue.IsEmpty && AsyncQueue.TryDequeue(out var func))
+                    res = res && await func(this);
+
+                if (transaction)
+                    await CommitAsync();
+
+                return res;
+            }
+            catch (Exception)
+            {
+                if (transaction)
+                    await RollbackAsync();
+
+                throw;
+            }
+        }
+        #endregion
         #endregion
 
         #region SaveChanges
@@ -142,7 +259,13 @@ namespace EFCoreRepository.Repositories
         /// 开启事务
         /// </summary>
         /// <returns>IRepository</returns>
-        public abstract IRepository BeginTrans();
+        public virtual IRepository BeginTransaction()
+        {
+            if (DbContext.Database.CurrentTransaction == null)
+                DbContext.Database.BeginTransaction();
+
+            return this;
+        }
 
         /// <summary>
         /// 提交事务
@@ -163,27 +286,18 @@ namespace EFCoreRepository.Repositories
         }
 
         /// <summary>
-        /// 关闭连接
-        /// </summary>
-        public virtual void Close()
-        {
-            DbContext.Database.CloseConnection();
-            DbContext.Dispose();
-        }
-
-        /// <summary>
         /// 执行事务，内部自动开启事务、提交和回滚事务
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托</param>
-        public virtual void ExecuteTrans(Action<IRepository> handler, Action<Exception> rollback = null)
+        public virtual void ExecuteTransaction(Action<IRepository> handler, Action<Exception> rollback = null)
         {
             IRepository repository = null;
             try
             {
                 if (handler != null)
                 {
-                    repository = BeginTrans();
+                    repository = BeginTransaction();
                     handler(repository);
                     repository.Commit();
                 }
@@ -204,14 +318,14 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托，注意：自定义委托返回false时，rollback委托的异常参数为null</param>
-        public virtual void ExecuteTrans(Func<IRepository, bool> handler, Action<Exception> rollback = null)
+        public virtual void ExecuteTransaction(Func<IRepository, bool> handler, Action<Exception> rollback = null)
         {
             IRepository repository = null;
             try
             {
                 if (handler != null)
                 {
-                    repository = BeginTrans();
+                    repository = BeginTransaction();
                     var res = handler(repository);
                     if (res)
                         repository.Commit();
@@ -239,28 +353,58 @@ namespace EFCoreRepository.Repositories
         /// 开启事务
         /// </summary>
         /// <returns>IRepository</returns>
-        public abstract Task<IRepository> BeginTransAsync();
+        public virtual async Task<IRepository> BeginTransactionAsync()
+        {
+            if (DbContext.Database.CurrentTransaction == null)
+                await DbContext.Database.BeginTransactionAsync();
+
+            return this;
+        }
+
+        /// <summary>
+        /// 提交事务
+        /// </summary>
+        /// <returns></returns>
+        public virtual async Task CommitAsync()
+        {
+            await DbContext.Database.CommitTransactionAsync();
+
+            if (DbContext.Database.CurrentTransaction != null)
+                await DbContext.Database.CurrentTransaction.DisposeAsync();
+        }
+
+        /// <summary>
+        /// 回滚事务
+        /// </summary>
+        public virtual async Task RollbackAsync()
+        {
+            await DbContext.Database.RollbackTransactionAsync();
+
+            if (DbContext.Database.CurrentTransaction != null)
+                await DbContext.Database.CurrentTransaction.DisposeAsync();
+        }
 
         /// <summary>
         /// 执行事务，内部自动开启事务、提交和回滚事务
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托</param>
-        public virtual async Task ExecuteTransAsync(Func<IRepository, Task> handler, Func<Exception, Task> rollback = null)
+        public virtual async Task ExecuteTransactionAsync(Func<IRepository, Task> handler, Func<Exception, Task> rollback = null)
         {
             IRepository repository = null;
             try
             {
                 if (handler != null)
                 {
-                    repository = await BeginTransAsync();
+                    repository = await BeginTransactionAsync();
                     await handler(repository);
-                    repository.Commit();
+                    await repository.CommitAsync();
                 }
             }
             catch (Exception ex)
             {
-                repository?.Rollback();
+                if (repository != null)
+                    await repository.RollbackAsync();
 
                 if (rollback != null)
                     await rollback(ex);
@@ -274,27 +418,30 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托，注意：自定义委托返回false时，rollback委托的异常参数为null</param>
-        public virtual async Task ExecuteTransAsync(Func<IRepository, Task<bool>> handler, Func<Exception, Task> rollback = null)
+        public virtual async Task ExecuteTransactionAsync(Func<IRepository, Task<bool>> handler, Func<Exception, Task> rollback = null)
         {
             IRepository repository = null;
             try
             {
                 if (handler != null)
                 {
-                    repository = await BeginTransAsync();
+                    repository = await BeginTransactionAsync();
                     var res = await handler(repository);
                     if (res)
-                        repository.Commit();
+                        await repository.CommitAsync();
                     else
                     {
-                        repository.Rollback();
-                        await rollback?.Invoke(null);
+                        await repository.RollbackAsync();
+
+                        if (rollback != null)
+                            await rollback(null);
                     }
                 }
             }
             catch (Exception ex)
             {
-                repository?.Rollback();
+                if (repository != null)
+                    await repository.RollbackAsync();
 
                 if (rollback != null)
                     await rollback(ex);
@@ -1800,7 +1947,22 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public abstract (List<T> list, long total) FindList<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual (List<T> list, long total) FindList<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var type = typeof(T);
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
+            {
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
+        }
 
         /// <summary>
         /// with语法分页查询
@@ -1812,7 +1974,22 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public abstract (List<T> list, long total) FindListByWith<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual (List<T> list, long total) FindListByWith<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var type = typeof(T);
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
+            {
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
+        }
         #endregion
 
         #region Async
@@ -2265,7 +2442,22 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public abstract Task<(List<T> list, long total)> FindListAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual async Task<(List<T> list, long total)> FindListAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var type = typeof(T);
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
+        }
 
         /// <summary>
         /// with语法分页查询
@@ -2277,7 +2469,22 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public abstract Task<(List<T> list, long total)> FindListByWithAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual async Task<(List<T> list, long total)> FindListByWithAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var type = typeof(T);
+            if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
+            }
+            else
+            {
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
+            }
+        }
         #endregion
         #endregion
 
@@ -2328,7 +2535,13 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        public abstract (DataTable table, long total) FindTable(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual (DataTable table, long total) FindTable(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
+        }
 
         /// <summary>
         /// with语法分页查询
@@ -2340,7 +2553,13 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        public abstract (DataTable table, long total) FindTableByWith(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual (DataTable table, long total) FindTableByWith(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
+        }
         #endregion
 
         #region Async
@@ -2389,7 +2608,13 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>
         /// <returns>返回DataTable和总记录数</returns>
-        public abstract Task<(DataTable table, long total)> FindTableAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual async Task<(DataTable table, long total)> FindTableAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
+        }
 
         /// <summary>
         /// with语法分页查询
@@ -2401,7 +2626,13 @@ namespace EFCoreRepository.Repositories
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        public abstract Task<(DataTable table, long total)> FindTableByWithAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        public virtual async Task<(DataTable table, long total)> FindTableByWithAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        {
+            var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
+
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
+        }
         #endregion
         #endregion
 
@@ -2455,6 +2686,61 @@ namespace EFCoreRepository.Repositories
             return await DbContext.SqlQueryMultipleAsync<T>(sql, parameter);
         }
         #endregion
+        #endregion
+
+        #region Close
+        #region Sync
+        /// <summary>
+        /// 关闭连接
+        /// </summary>
+        public virtual void Close()
+        {
+            DbContext.Database.CloseConnection();
+            DbContext.Dispose();
+        }
+        #endregion
+
+        #region Async
+        /// <summary>
+        /// 关闭连接
+        /// </summary>
+        public virtual async ValueTask CloseAsync()
+        {
+            await DbContext.Database.CloseConnectionAsync();
+            await DbContext.DisposeAsync();
+        }
+        #endregion
+        #endregion
+
+        #region Dispose
+        #region Sync
+        /// <summary>
+        /// 释放资源
+        /// </summary>
+        public virtual void Dispose() => Close();
+        #endregion
+
+        #region Async
+        /// <summary>
+        /// 释放资源
+        /// </summary>
+        /// <returns></returns>
+        public virtual async ValueTask DisposeAsync() => await CloseAsync();
+        #endregion
+        #endregion
+
+        #region Page
+        /// <summary>
+        /// 获取分页语句
+        /// </summary>
+        /// <param name="isWithSyntax">是否with语法</param>
+        /// <param name="sql">原始sql语句</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="isAscending">是否升序排序</param>
+        /// <param name="pageSize">每页数量</param>
+        /// <param name="pageIndex">当前页码</param>
+        /// <returns></returns>
+        public abstract string GetPageSql(bool isWithSyntax, string sql, string orderField, bool isAscending, int pageSize, int pageIndex);
         #endregion
     }
 }

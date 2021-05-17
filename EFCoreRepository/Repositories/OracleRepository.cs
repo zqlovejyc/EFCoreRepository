@@ -35,48 +35,14 @@ namespace EFCoreRepository.Repositories
     /// <summary>
     /// Oracle仓储实现类
     /// </summary>
-    public class OracleRepository : BaseRepository, IRepository
+    public class OracleRepository : BaseRepository
     {
         #region Constructor
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="context">DbContext实例</param>
-        public OracleRepository(DbContext context)
-        {
-            DbContext = context;
-            DbContext.Database.SetCommandTimeout(CommandTimeout);
-        }
-        #endregion
-
-        #region Transaction
-        #region Sync
-        /// <summary>
-        /// 开启事务
-        /// </summary>
-        /// <returns>IRepository</returns>
-        public override IRepository BeginTrans()
-        {
-            if (DbContext.Database.CurrentTransaction == null)
-                DbContext.Database.BeginTransaction();
-
-            return this;
-        }
-        #endregion
-
-        #region Async
-        /// <summary>
-        /// 开启事务
-        /// </summary>
-        /// <returns>IRepository</returns>
-        public override async Task<IRepository> BeginTransAsync()
-        {
-            if (DbContext.Database.CurrentTransaction == null)
-                await DbContext.Database.BeginTransactionAsync();
-
-            return this;
-        }
-        #endregion
+        public OracleRepository(DbContext context) : base(context) { }
         #endregion
 
         #region FindList
@@ -93,17 +59,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public override (List<T> list, long total) FindList<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
-
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
             var list = DbContext.SqlQuery<T>(sqlQuery, parameter);
@@ -122,17 +80,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public override (List<T> list, long total) FindListByWith<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
-
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
             var list = DbContext.SqlQuery<T>(sqlQuery, parameter);
@@ -153,17 +103,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public override async Task<(List<T> list, long total)> FindListAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
-
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
             var list = await DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
@@ -182,17 +124,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public override async Task<(List<T> list, long total)> FindListByWithAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
-
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
             var list = await DbContext.SqlQueryAsync<T>(sqlQuery, parameter);
@@ -215,17 +149,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回DataTable和总记录数</returns>
         public override (DataTable table, long total) FindTable(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
-
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
             var table = DbContext.SqlDataTable(sqlQuery, parameter);
@@ -244,17 +170,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回DataTable和总记录数</returns>
         public override (DataTable table, long total) FindTableByWith(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
-
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = DbContext.SqlQuery<long>(sqlCount, parameter).FirstOrDefault();
             var table = DbContext.SqlDataTable(sqlQuery, parameter);
@@ -275,17 +193,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回DataTable和总记录数</returns>
         public override async Task<(DataTable table, long total)> FindTableAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T";
-
-            var sqlQuery = $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {pageSize * pageIndex}) T WHERE \"ROWNUMBER\" >= {pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
             var table = await DbContext.SqlDataTableAsync(sqlQuery, parameter);
@@ -304,17 +214,9 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回DataTable和总记录数</returns>
         public override async Task<(DataTable table, long total)> FindTableByWithAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            if (!orderField.IsNullOrEmpty())
-            {
-                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
-                    orderField = $"ORDER BY {orderField}";
-                else
-                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
-            }
-
-            var sqlCount = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
-
-            var sqlQuery = $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {pageSize * pageIndex}) SELECT * FROM R WHERE ROWNUMBER>={pageSize * (pageIndex - 1) + 1}";
+            var sqlPage = sql.Split(';');
+            var sqlCount = sqlPage[0];
+            var sqlQuery = sqlPage[1];
 
             var total = (await DbContext.SqlQueryAsync<long>(sqlCount, parameter)).FirstOrDefault();
             var table = await DbContext.SqlDataTableAsync(sqlQuery, parameter);
@@ -323,13 +225,47 @@ namespace EFCoreRepository.Repositories
         #endregion
         #endregion
 
-        #region Dispose
+        #region Page
         /// <summary>
-        /// 释放资源
+        /// 获取分页语句
         /// </summary>
-        public void Dispose()
+        /// <param name="isWithSyntax">是否with语法</param>
+        /// <param name="sql">原始sql语句</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="isAscending">是否升序排序</param>
+        /// <param name="pageSize">每页数量</param>
+        /// <param name="pageIndex">当前页码</param>
+        /// <returns></returns>
+        public override string GetPageSql(bool isWithSyntax, string sql, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
-            Close();
+            //排序字段
+            if (!orderField.IsNullOrEmpty())
+            {
+                if (orderField.Contains(@"(/\*(?:|)*?\*/)|(\b(ASC|DESC)\b)", RegexOptions.IgnoreCase))
+                    orderField = $"ORDER BY {orderField}";
+                else
+                    orderField = $"ORDER BY {orderField} {(isAscending ? "ASC" : "DESC")}";
+            }
+
+            string sqlQuery;
+            var rowStart = pageSize * (pageIndex - 1) + 1;
+            var rowEnd = pageSize * pageIndex;
+
+            //判断是否with语法
+            if (isWithSyntax)
+            {
+                sqlQuery = $"{sql} SELECT {CountSyntax} AS \"TOTAL\" FROM T;";
+
+                sqlQuery += $"{sql.Remove(sql.LastIndexOf(")"), 1)} {orderField}),R AS (SELECT ROWNUM AS ROWNUMBER,T.* FROM T WHERE ROWNUM <= {rowEnd}) SELECT * FROM R WHERE ROWNUMBER>={rowStart}";
+            }
+            else
+            {
+                sqlQuery = $"SELECT {CountSyntax} AS \"TOTAL\" FROM ({sql}) T;";
+
+                sqlQuery += $"SELECT * FROM (SELECT X.*,ROWNUM AS \"ROWNUMBER\" FROM ({sql} {orderField}) X WHERE ROWNUM <= {rowEnd}) T WHERE \"ROWNUMBER\" >= {rowStart}";
+            }
+
+            return sqlQuery;
         }
         #endregion
     }

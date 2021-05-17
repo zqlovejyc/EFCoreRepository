@@ -19,6 +19,7 @@
 using EFCoreRepository.Enums;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -35,7 +36,7 @@ namespace EFCoreRepository.Repositories
     /// <summary>
     /// 数据操作仓储接口
     /// </summary>
-    public interface IRepository : IDisposable
+    public interface IRepository : IDisposable, IAsyncDisposable
     {
         #region Property
         /// <summary>
@@ -64,6 +65,50 @@ namespace EFCoreRepository.Repositories
         DbContext DbContext { get; set; }
         #endregion
 
+        #region Queue
+        #region Sync
+        /// <summary>
+        /// 同步委托队列(Queue)
+        /// </summary>
+        ConcurrentQueue<Func<IRepository, bool>> Queue { get; }
+
+        /// <summary>
+        /// 加入同步委托队列(Queue)
+        /// </summary>
+        /// <param name="func">自定义委托</param>
+        /// <returns></returns>
+        void AddQueue(Func<IRepository, bool> func);
+
+        /// <summary>
+        /// 保存同步委托队列(Queue)
+        /// </summary>
+        /// <param name="transaction">是否开启事务</param>
+        /// <returns></returns>
+        bool SaveQueue(bool transaction = true);
+        #endregion
+
+        #region Async
+        /// <summary>
+        /// 异步委托队列(AsyncQueue)
+        /// </summary>
+        ConcurrentQueue<Func<IRepository, Task<bool>>> AsyncQueue { get; }
+
+        /// <summary>
+        /// 加入异步委托队列(AsyncQueue)
+        /// </summary>
+        /// <param name="func">自定义委托</param>
+        /// <returns></returns>
+        void AddQueue(Func<IRepository, Task<bool>> func);
+
+        /// <summary>
+        /// 保存异步委托队列(AsyncQueue)
+        /// </summary>
+        /// <param name="transaction">是否开启事务</param>
+        /// <returns></returns>
+        Task<bool> SaveQueueAsync(bool transaction = true);
+        #endregion
+        #endregion
+
         #region SaveChanges
         #region Sync
         /// <summary>
@@ -88,7 +133,7 @@ namespace EFCoreRepository.Repositories
         /// 开启事务
         /// </summary>
         /// <returns>IRepository</returns>
-        IRepository BeginTrans();
+        IRepository BeginTransaction();
 
         /// <summary>
         /// 提交事务
@@ -102,23 +147,18 @@ namespace EFCoreRepository.Repositories
         void Rollback();
 
         /// <summary>
-        /// 关闭连接
-        /// </summary>
-        void Close();
-
-        /// <summary>
         /// 执行事务，内部自动开启事务、提交和回滚事务
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托</param>
-        void ExecuteTrans(Action<IRepository> handler, Action<Exception> rollback = null);
+        void ExecuteTransaction(Action<IRepository> handler, Action<Exception> rollback = null);
 
         /// <summary>
         /// 执行事务，根据自定义委托返回值内部自动开启事务、提交和回滚事务
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托，注意：自定义委托返回false时，rollback委托的异常参数为null</param>
-        void ExecuteTrans(Func<IRepository, bool> handler, Action<Exception> rollback = null);
+        void ExecuteTransaction(Func<IRepository, bool> handler, Action<Exception> rollback = null);
         #endregion
 
         #region Async
@@ -126,21 +166,32 @@ namespace EFCoreRepository.Repositories
         /// 开启事务
         /// </summary>
         /// <returns>IRepository</returns>
-        Task<IRepository> BeginTransAsync();
+        Task<IRepository> BeginTransactionAsync();
+
+        /// <summary>
+        /// 提交事务
+        /// </summary>
+        /// <returns></returns>
+        Task CommitAsync();
+
+        /// <summary>
+        /// 回滚事务
+        /// </summary>
+        Task RollbackAsync();
 
         /// <summary>
         /// 执行事务，内部自动开启事务、提交和回滚事务
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托</param>
-        Task ExecuteTransAsync(Func<IRepository, Task> handler, Func<Exception, Task> rollback = null);
+        Task ExecuteTransactionAsync(Func<IRepository, Task> handler, Func<Exception, Task> rollback = null);
 
         /// <summary>
         /// 执行事务，根据自定义委托返回值内部自动开启事务、提交和回滚事务
         /// </summary>
         /// <param name="handler">自定义委托</param>
         /// <param name="rollback">事务回滚处理委托，注意：自定义委托返回false时，rollback委托的异常参数为null</param>
-        Task ExecuteTransAsync(Func<IRepository, Task<bool>> handler, Func<Exception, Task> rollback = null);
+        Task ExecuteTransactionAsync(Func<IRepository, Task<bool>> handler, Func<Exception, Task> rollback = null);
         #endregion
         #endregion
 
@@ -1147,6 +1198,22 @@ namespace EFCoreRepository.Repositories
         /// <param name="parameter">对应参数</param>
         /// <returns>返回查询结果集</returns>
         Task<List<List<T>>> FindMultipleAsync<T>(string sql, params DbParameter[] parameter);
+        #endregion
+        #endregion
+
+        #region Close
+        #region Sync
+        /// <summary>
+        /// 关闭连接
+        /// </summary>
+        void Close();
+        #endregion
+
+        #region Async
+        /// <summary>
+        /// 关闭连接
+        /// </summary>
+        ValueTask CloseAsync();
         #endregion
         #endregion
     }
