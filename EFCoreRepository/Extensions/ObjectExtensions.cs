@@ -17,6 +17,7 @@
 #endregion
 
 using System;
+using System.ComponentModel;
 /****************************
 * [Author] 张强
 * [Date] 2020-10-19
@@ -48,6 +49,52 @@ namespace EFCoreRepository.Extensions
         /// <returns>object</returns>
         public static object ToSafeValue(this object @this, Type type) =>
             @this == null ? null : Convert.ChangeType(@this, type.GetCoreType());
+        #endregion
+
+        #region To
+        /// <summary>
+        /// To
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="this"></param>
+        /// <returns></returns>
+        public static T To<T>(this object @this)
+        {
+            if (@this != null)
+            {
+                var targetType = typeof(T);
+
+                if (@this.GetType() == targetType)
+                {
+                    return (T)@this;
+                }
+
+                var converter = TypeDescriptor.GetConverter(@this);
+                if (converter != null)
+                {
+                    if (converter.CanConvertTo(targetType))
+                    {
+                        return (T)converter.ConvertTo(@this, targetType);
+                    }
+                }
+
+                converter = TypeDescriptor.GetConverter(targetType);
+                if (converter != null)
+                {
+                    if (converter.CanConvertFrom(@this.GetType()))
+                    {
+                        return (T)converter.ConvertFrom(@this);
+                    }
+                }
+
+                if (@this == DBNull.Value)
+                {
+                    return (T)(object)null;
+                }
+            }
+
+            return (T)@this;
+        }
         #endregion
     }
 }
