@@ -552,6 +552,28 @@ namespace EFCoreRepository.Repositories
         /// <param name="predicate">条件</param>
         /// <returns>返回实体</returns>
         S FindEntity<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class;
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        T FindEntity<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class;
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <typeparam name="S">泛型类型</typeparam>
+        /// <param name="selector">选择指定列</param>
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        S FindEntity<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class;
         #endregion
 
         #region Async
@@ -606,6 +628,28 @@ namespace EFCoreRepository.Repositories
         /// <param name="predicate">条件</param>
         /// <returns>返回实体</returns>
         Task<S> FindEntityAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class;
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>        
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        Task<T> FindEntityAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class;
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <typeparam name="S">泛型类型</typeparam>
+        /// <param name="selector">选择指定列</param>
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        Task<S> FindEntityAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class;
         #endregion
         #endregion
 

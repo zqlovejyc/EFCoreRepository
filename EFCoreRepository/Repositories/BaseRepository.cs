@@ -1056,7 +1056,7 @@ namespace EFCoreRepository.Repositories
             {
                 return query.FirstOrDefault();
             }
-            return default(T);
+            return default;
         }
 
         /// <summary>
@@ -1093,6 +1093,34 @@ namespace EFCoreRepository.Repositories
         public virtual S FindEntity<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
             return DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        public virtual T FindEntity<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
+        {
+            return DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).FirstOrDefault();
+        }
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <typeparam name="S">泛型类型</typeparam>
+        /// <param name="selector">选择指定列</param>
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        public virtual S FindEntity<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
+        {
+            return DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).Select(selector).FirstOrDefault();
         }
         #endregion
 
@@ -1133,7 +1161,7 @@ namespace EFCoreRepository.Repositories
             {
                 return query.FirstOrDefault();
             }
-            return default(T);
+            return default;
         }
 
         /// <summary>
@@ -1170,6 +1198,34 @@ namespace EFCoreRepository.Repositories
         public virtual async Task<S> FindEntityAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate) where T : class
         {
             return await DbContext.Set<T>().Where(predicate).Select(selector).FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>        
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        public virtual async Task<T> FindEntityAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
+        {
+            return await DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).FirstOrDefaultAsync();
+        }
+
+        /// <summary>
+        /// 根据条件查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <typeparam name="S">泛型类型</typeparam>
+        /// <param name="selector">选择指定列</param>
+        /// <param name="predicate">条件</param>
+        /// <param name="orderField">排序字段</param>
+        /// <param name="orderTypes">排序类型</param>
+        /// <returns>返回实体</returns>
+        public virtual async Task<S> FindEntityAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
+        {
+            return await DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).Select(selector).FirstOrDefaultAsync();
         }
         #endregion
         #endregion
@@ -1219,49 +1275,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual IQueryable<T> IQueryable<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return order;
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return query.OrderByDescending(orderField);
-                else
-                    return query.OrderBy(orderField);
-            }
+            return DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes);
         }
 
         /// <summary>
@@ -1289,49 +1303,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual IQueryable<S> IQueryable<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return order.Select(selector);
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return query.OrderByDescending(orderField).Select(selector);
-                else
-                    return query.OrderBy(orderField).Select(selector);
-            }
+            return DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).Select(selector);
         }
         #endregion
 
@@ -1379,49 +1351,8 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<T>> IQueryableAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return await Task.FromResult(order);
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return await Task.FromResult(query.OrderByDescending(orderField));
-                else
-                    return await Task.FromResult(query.OrderBy(orderField));
-            }
+            var queryable = DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes);
+            return await Task.FromResult(queryable);
         }
 
         /// <summary>
@@ -1449,49 +1380,8 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual async Task<IQueryable<S>> IQueryableAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return await Task.FromResult(order.Select(selector));
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return await Task.FromResult(query.OrderByDescending(orderField).Select(selector));
-                else
-                    return await Task.FromResult(query.OrderBy(orderField).Select(selector));
-            }
+            var queryable = DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).Select(selector);
+            return await Task.FromResult(queryable);
         }
         #endregion
         #endregion
@@ -1529,49 +1419,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return order.ToList();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return query.OrderByDescending(orderField).ToList();
-                else
-                    return query.OrderBy(orderField).ToList();
-            }
+            return DbContext.Set<T>().ToOrderedQueryable(orderField, orderTypes).ToList();
         }
 
         /// <summary>
@@ -1585,49 +1433,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual IEnumerable<S> FindList<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return order.Select(selector).ToList();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return query.OrderByDescending(orderField).Select(selector).ToList();
-                else
-                    return query.OrderBy(orderField).Select(selector).ToList();
-            }
+            return DbContext.Set<T>().ToOrderedQueryable(orderField, orderTypes).Select(selector).ToList();
         }
 
         /// <summary>
@@ -1651,49 +1457,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual IEnumerable<T> FindList<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return order.ToList();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return query.OrderByDescending(orderField).ToList();
-                else
-                    return query.OrderBy(orderField).ToList();
-            }
+            return DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).ToList();
         }
 
         /// <summary>
@@ -1721,49 +1485,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual IEnumerable<S> FindList<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return order.Select(selector).ToList();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return query.OrderByDescending(orderField).Select(selector).ToList();
-                else
-                    return query.OrderBy(orderField).Select(selector).ToList();
-            }
+            return DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).Select(selector).ToList();
         }
 
         /// <summary>
@@ -1813,51 +1535,13 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public virtual (IEnumerable<T> list, long total) FindList<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
-            IOrderedQueryable<T> order = null;
             var query = DbContext.Set<T>().Where(predicate);
             var total = query.Count();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    order = query.OrderByDescending(orderField);
-                else
-                    order = query.OrderBy(orderField);
-            }
+            var order = query.ToOrderedQueryable(orderField, orderTypes);
+
             //分页
             query = order.Skip(pageSize * (pageIndex - 1)).Take(pageSize);
+
             return (query.ToList(), total);
         }
 
@@ -1875,49 +1559,10 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public virtual (IEnumerable<S> list, long total) FindList<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
-            IOrderedQueryable<T> order = null;
             var query = DbContext.Set<T>().Where(predicate);
             var total = query.Count();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    order = query.OrderByDescending(orderField);
-                else
-                    order = query.OrderBy(orderField);
-            }
+            var order = query.ToOrderedQueryable(orderField, orderTypes);
+
             //分页
             query = order.Skip(pageSize * (pageIndex - 1)).Take(pageSize);
             return (query.Select(selector).ToList(), total);
@@ -2024,49 +1669,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return await order.ToListAsync();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return await query.OrderByDescending(orderField).ToListAsync();
-                else
-                    return await query.OrderBy(orderField).ToListAsync();
-            }
+            return await DbContext.Set<T>().ToOrderedQueryable(orderField, orderTypes).ToListAsync();
         }
 
         /// <summary>
@@ -2080,49 +1683,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<S>> FindListAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return await order.Select(selector).ToListAsync();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return await query.OrderByDescending(orderField).Select(selector).ToListAsync();
-                else
-                    return await query.OrderBy(orderField).Select(selector).ToListAsync();
-            }
+            return await DbContext.Set<T>().ToOrderedQueryable(orderField, orderTypes).Select(selector).ToListAsync();
         }
 
         /// <summary>
@@ -2146,49 +1707,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<T>> FindListAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return await order.ToListAsync();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return await query.OrderByDescending(orderField).ToListAsync();
-                else
-                    return await query.OrderBy(orderField).ToListAsync();
-            }
+            return await DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).ToListAsync();
         }
 
         /// <summary>
@@ -2216,49 +1735,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合</returns>
         public virtual async Task<IEnumerable<S>> FindListAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
         {
-            var query = DbContext.Set<T>().Where(predicate);
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                IOrderedQueryable<T> order = null;
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-                return await order.Select(selector).ToListAsync();
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    return await query.OrderByDescending(orderField).Select(selector).ToListAsync();
-                else
-                    return await query.OrderBy(orderField).Select(selector).ToListAsync();
-            }
+            return await DbContext.Set<T>().Where(predicate).ToOrderedQueryable(orderField, orderTypes).Select(selector).ToListAsync();
         }
 
         /// <summary>
@@ -2308,49 +1785,10 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public virtual async Task<(IEnumerable<T> list, long total)> FindListAsync<T>(Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
-            IOrderedQueryable<T> order = null;
             var query = DbContext.Set<T>().Where(predicate);
             var total = await query.CountAsync();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    order = query.OrderByDescending(orderField);
-                else
-                    order = query.OrderBy(orderField);
-            }
+            var order = query.ToOrderedQueryable(orderField, orderTypes);
+
             //分页
             query = order.Skip(pageSize * (pageIndex - 1)).Take(pageSize);
             return (await query.ToListAsync(), total);
@@ -2370,49 +1808,10 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回集合和总记录数</returns>
         public virtual async Task<(IEnumerable<S> list, long total)> FindListAsync<T, S>(Expression<Func<T, S>> selector, Expression<Func<T, bool>> predicate, Expression<Func<T, object>> orderField, int pageSize, int pageIndex, params OrderType[] orderTypes) where T : class
         {
-            IOrderedQueryable<T> order = null;
             var query = DbContext.Set<T>().Where(predicate);
             var total = await query.CountAsync();
-            //多个字段排序
-            if (orderField.Body is NewExpression newExpression)
-            {
-                for (var i = 0; i < newExpression.Members.Count; i++)
-                {
-                    //指定排序类型
-                    if (i <= orderTypes.Length - 1)
-                    {
-                        if (orderTypes[i] == OrderType.Descending)
-                        {
-                            if (i > 0)
-                                order = order.ThenByDescending(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderByDescending(newExpression.Members[i].Name);
-                        }
-                        else
-                        {
-                            if (i > 0)
-                                order = order.ThenBy(newExpression.Members[i].Name);
-                            else
-                                order = query.OrderBy(newExpression.Members[i].Name);
-                        }
-                    }
-                    else
-                    {
-                        if (i > 0)
-                            order = order.ThenBy(newExpression.Members[i].Name);
-                        else
-                            order = query.OrderBy(newExpression.Members[i].Name);
-                    }
-                }
-            }
-            //单个字段排序
-            else
-            {
-                if (orderTypes.FirstOrDefault() == OrderType.Descending)
-                    order = query.OrderByDescending(orderField);
-                else
-                    order = query.OrderBy(orderField);
-            }
+            var order = query.ToOrderedQueryable(orderField, orderTypes);
+
             //分页
             query = order.Skip(pageSize * (pageIndex - 1)).Take(pageSize);
             return (await query.Select(selector).ToListAsync(), total);

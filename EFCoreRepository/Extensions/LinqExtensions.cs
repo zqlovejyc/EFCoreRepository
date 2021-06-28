@@ -16,6 +16,8 @@
  */
 #endregion
 
+using EFCoreRepository.Enums;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 using System.Linq.Expressions;
@@ -1311,6 +1313,116 @@ namespace EFCoreRepository.Extensions
                 .Invoke(null, new object[] { @this, lambda });
 
             return (IOrderedQueryable<T>)result;
+        }
+
+        /// <summary>
+        /// 根据排序字段和排序类型转换为IOrderedQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="this"></param>
+        /// <param name="orderField"></param>
+        /// <param name="orderTypes"></param>
+        /// <returns></returns>
+        public static IOrderedQueryable<T> ToOrderedQueryable<T>(this DbSet<T> @this, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
+        {
+            //多个字段排序
+            if (orderField?.Body is NewExpression newExpression)
+            {
+                IOrderedQueryable<T> order = null;
+                for (var i = 0; i < newExpression.Members.Count; i++)
+                {
+                    //指定排序类型
+                    if (i <= orderTypes.Length - 1)
+                    {
+                        if (orderTypes[i] == OrderType.Descending)
+                        {
+                            if (i > 0)
+                                order = order.ThenByDescending(newExpression.Members[i].Name);
+                            else
+                                order = @this.OrderByDescending(newExpression.Members[i].Name);
+                        }
+                        else
+                        {
+                            if (i > 0)
+                                order = order.ThenBy(newExpression.Members[i].Name);
+                            else
+                                order = @this.OrderBy(newExpression.Members[i].Name);
+                        }
+                    }
+                    else
+                    {
+                        if (i > 0)
+                            order = order.ThenBy(newExpression.Members[i].Name);
+                        else
+                            order = @this.OrderBy(newExpression.Members[i].Name);
+                    }
+                }
+
+                return order;
+            }
+            //单个字段排序
+            else
+            {
+                if (orderTypes?.FirstOrDefault() == OrderType.Descending)
+                    return @this.OrderByDescending(orderField);
+                else
+                    return @this.OrderBy(orderField);
+            }
+        }
+
+        /// <summary>
+        /// 根据排序字段和排序类型转换为IOrderedQueryable
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="this"></param>
+        /// <param name="orderField"></param>
+        /// <param name="orderTypes"></param>
+        /// <returns></returns>
+        public static IOrderedQueryable<T> ToOrderedQueryable<T>(this IQueryable<T> @this, Expression<Func<T, object>> orderField, params OrderType[] orderTypes) where T : class
+        {
+            //多个字段排序
+            if (orderField?.Body is NewExpression newExpression)
+            {
+                IOrderedQueryable<T> order = null;
+                for (var i = 0; i < newExpression.Members.Count; i++)
+                {
+                    //指定排序类型
+                    if (i <= orderTypes.Length - 1)
+                    {
+                        if (orderTypes[i] == OrderType.Descending)
+                        {
+                            if (i > 0)
+                                order = order.ThenByDescending(newExpression.Members[i].Name);
+                            else
+                                order = @this.OrderByDescending(newExpression.Members[i].Name);
+                        }
+                        else
+                        {
+                            if (i > 0)
+                                order = order.ThenBy(newExpression.Members[i].Name);
+                            else
+                                order = @this.OrderBy(newExpression.Members[i].Name);
+                        }
+                    }
+                    else
+                    {
+                        if (i > 0)
+                            order = order.ThenBy(newExpression.Members[i].Name);
+                        else
+                            order = @this.OrderBy(newExpression.Members[i].Name);
+                    }
+                }
+
+                return order;
+            }
+            //单个字段排序
+            else
+            {
+                if (orderTypes?.FirstOrDefault() == OrderType.Descending)
+                    return @this.OrderByDescending(orderField);
+                else
+                    return @this.OrderBy(orderField);
+            }
         }
         #endregion
     }
