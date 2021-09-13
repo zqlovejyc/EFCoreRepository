@@ -93,7 +93,7 @@ namespace EFCoreRepository.Extensions
                 }
             }
 
-            return (T)@this;
+            return @this == null ? default : (T)@this;
         }
         #endregion
     }
