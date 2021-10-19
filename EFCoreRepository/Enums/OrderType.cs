@@ -16,6 +16,7 @@
  */
 #endregion
 
+using System.ComponentModel;
 /****************************
 * [Author] 张强
 * [Date] 2020-09-23
@@ -31,11 +32,11 @@ namespace EFCoreRepository.Enums
         /// <summary>
         /// 升序
         /// </summary>
-        Ascending,
+        [Description("Ascending")] Ascending = 0,
 
         /// <summary>
         /// 降序
         /// </summary>
-        Descending
+        [Description("Descending")] Descending = 1
     }
 }

@@ -16,6 +16,7 @@
  */
 #endregion
 
+using System.ComponentModel;
 /****************************
 * [Author] 张强
 * [Date] 2020-09-23
@@ -31,26 +32,26 @@ namespace EFCoreRepository.Enums
         /// <summary>
         /// SqlServer数据库类型
         /// </summary>
-        SqlServer,
+        [Description("SqlServer")] SqlServer = 0,
 
         /// <summary>
         /// MySql数据库类型
         /// </summary>
-        MySql,
+        [Description("MySql")] MySql = 1,
 
         /// <summary>
         /// Oracle数据库类型
         /// </summary>
-        Oracle,
+        [Description("Oracle")] Oracle = 2,
 
         /// <summary>
         /// Sqlite数据库类型
         /// </summary>
-        Sqlite,
+        [Description("Sqlite")] Sqlite = 3,
 
         /// <summary>
         /// PostgreSql数据库类型
         /// </summary>
-        PostgreSql,
+        [Description("PostgreSql")] PostgreSql = 4
     }
 }

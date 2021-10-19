@@ -24,7 +24,11 @@ using Oracle.ManagedDataAccess.Client;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
-
+/****************************
+* [Author] 张强
+* [Date] 2021-10-19
+* [Describe] IDictionary扩展类
+* **************************/
 namespace EFCoreRepository.Extensions
 {
     /// <summary>

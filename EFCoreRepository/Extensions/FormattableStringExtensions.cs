@@ -20,7 +20,11 @@ using EFCoreRepository.Enums;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
-
+/****************************
+* [Author] 张强
+* [Date] 2021-10-19
+* [Describe] FormattableString扩展类
+* **************************/
 namespace EFCoreRepository.Extensions
 {
     /// <summary>
