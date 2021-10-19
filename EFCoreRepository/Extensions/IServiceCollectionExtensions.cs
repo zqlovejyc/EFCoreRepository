@@ -299,7 +299,7 @@ namespace EFCoreRepository.Extensions
         /// <param name="connectionSection">连接字符串配置Section，默认：ConnectionStrings</param>
         /// <param name="lifeTime">生命周期，默认：Scoped</param>
         /// <returns></returns>
-        /// <example>
+        /// <remarks>
         ///     <code>
         ///     //appsetting.json
         ///     {
@@ -327,7 +327,7 @@ namespace EFCoreRepository.Extensions
         ///         _repository = handler("Sqlserver");
         ///     }
         ///     </code>
-        /// </example>
+        /// </remarks>
         public static IServiceCollection AddEFCoreRepository(
             this IServiceCollection @this,
             IConfiguration configuration,
@@ -373,15 +373,35 @@ namespace EFCoreRepository.Extensions
         /// <param name="connectionSection">连接字符串配置Section，默认：ConnectionStrings</param>
         /// <param name="lifeTime">生命周期，默认：Scoped</param>
         /// <returns></returns>
-        /// <example>
+        /// <remarks>
         ///     <code>
-        ///     private readonly IRepository _repository;
-        ///     public WeatherForecastController(IRepository repository)
+        ///     //appsetting.json
         ///     {
-        ///         _repository = repository;
+        ///         "Logging": {
+        ///             "LogLevel": {
+        ///                 "Default": "Information",
+        ///                 "Microsoft": "Warning",
+        ///                 "Microsoft.Hosting.Lifetime": "Information"
+        ///             }
+        ///         },
+        ///         "AllowedHosts": "*",
+        ///         "ConnectionStrings": {
+        ///             "Base": [ "SqlServer", "数据库连接字符串" ],
+        ///             "Sqlserver": [ "SqlServer", "数据库连接字符串" ],
+        ///             "Oracle": [ "Oracle", "数据库连接字符串" ],
+        ///             "MySql": [ "MySql", "数据库连接字符串" ],
+        ///             "Sqlite": [ "Sqlite", "数据库连接字符串" ],
+        ///             "Pgsql": [ "PostgreSql", "数据库连接字符串" ]
+        ///         }
+        ///     }
+        ///     //Controller获取方法
+        ///     private readonly IRepository _repository;
+        ///     public WeatherForecastController(Func&lt;string, IRepository&gt; handler)
+        ///     {
+        ///         _repository = handler("Sqlserver");
         ///     }
         ///     </code>
-        /// </example>
+        /// </remarks>
         public static IServiceCollection AddEFCoreRepository(
             this IServiceCollection @this,
             IConfiguration configuration,
