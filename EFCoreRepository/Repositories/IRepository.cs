@@ -63,24 +63,29 @@ namespace EFCoreRepository.Repositories
         /// DbContext
         /// </summary>
         DbContext DbContext { get; set; }
+
+        /// <summary>
+        /// 数据库类型
+        /// </summary>
+        DatabaseType DatabaseType { get; }
         #endregion
 
         #region Queue
         #region Sync
         /// <summary>
-        /// 同步委托队列(Queue)
+        /// 同步委托队列(SyncQueue)
         /// </summary>
-        ConcurrentQueue<Func<IRepository, bool>> Queue { get; }
+        ConcurrentQueue<Func<IRepository, bool>> SyncQueue { get; }
 
         /// <summary>
-        /// 加入同步委托队列(Queue)
+        /// 加入同步委托队列(SyncQueue)
         /// </summary>
         /// <param name="func">自定义委托</param>
         /// <returns></returns>
         void AddQueue(Func<IRepository, bool> func);
 
         /// <summary>
-        /// 保存同步委托队列(Queue)
+        /// 保存同步委托队列(SyncQueue)
         /// </summary>
         /// <param name="transaction">是否开启事务</param>
         /// <returns></returns>
@@ -207,6 +212,13 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 执行sql语句
         /// </summary>
+        /// <param name="formattableSql">内插sql语句</param>
+        /// <returns>返回受影响行数</returns>
+        int ExecuteBySql(FormattableString formattableSql);
+
+        /// <summary>
+        /// 执行sql语句
+        /// </summary>
         /// <param name="sql">sql语句</param>
         /// <param name="parameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
@@ -216,18 +228,18 @@ namespace EFCoreRepository.Repositories
         /// 执行sql存储过程
         /// </summary>
         /// <param name="procName">存储过程名称</param>
-        ///  <param name="parameter">对应参数</param>
+        ///  <param name="dbParameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
-        int ExecuteByProc(string procName, params DbParameter[] parameter);
+        int ExecuteByProc(string procName, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 执行sql存储过程查询
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="procName"></param>
-        /// <param name="parameter"></param>
+        /// <param name="dbParameter"></param>
         /// <returns></returns>
-        IEnumerable<T> ExecuteByProc<T>(string procName, params DbParameter[] parameter);
+        IEnumerable<T> ExecuteByProc<T>(string procName, params DbParameter[] dbParameter);
         #endregion
 
         #region Async
@@ -241,6 +253,13 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 执行sql语句
         /// </summary>
+        /// <param name="formattableSql">内插sql语句</param>
+        /// <returns>返回受影响行数</returns>
+        Task<int> ExecuteBySqlAsync(FormattableString formattableSql);
+
+        /// <summary>
+        /// 执行sql语句
+        /// </summary>
         /// <param name="sql">sql语句</param>
         /// <param name="parameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
@@ -250,18 +269,18 @@ namespace EFCoreRepository.Repositories
         /// 执行sql存储过程
         /// </summary>
         /// <param name="procName">存储过程名称</param>
-        ///  <param name="parameter">对应参数</param>
+        ///  <param name="dbParameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
-        Task<int> ExecuteByProcAsync(string procName, params DbParameter[] parameter);
+        Task<int> ExecuteByProcAsync(string procName, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 执行sql存储过程查询
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="procName"></param>
-        /// <param name="parameter"></param>
+        /// <param name="dbParameter"></param>
         /// <returns></returns>
-        Task<IEnumerable<T>> ExecuteByProcAsync<T>(string procName, params DbParameter[] parameter);
+        Task<IEnumerable<T>> ExecuteByProcAsync<T>(string procName, params DbParameter[] dbParameter);
         #endregion
         #endregion
 
@@ -475,10 +494,17 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 查询单个对象
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果对象</returns>
-        object FindObject(string sql, params DbParameter[] parameter);
+        object FindObject(FormattableString formattableSql);
+
+        /// <summary>
+        /// 查询单个对象
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果对象</returns>
+        object FindObject(string sql, params DbParameter[] dbParameter);
         #endregion
 
         #region Async
@@ -492,10 +518,17 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 查询单个对象
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果对象</returns>
-        Task<object> FindObjectAsync(string sql, params DbParameter[] parameter);
+        Task<object> FindObjectAsync(FormattableString formattableSql);
+
+        /// <summary>
+        /// 查询单个对象
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果对象</returns>
+        Task<object> FindObjectAsync(string sql, params DbParameter[] dbParameter);
         #endregion
         #endregion
 
@@ -521,10 +554,18 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询单个实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回实体</returns>
-        T FindEntity<T>(string sql, params DbParameter[] parameter);
+        T FindEntity<T>(FormattableString formattableSql);
+
+        /// <summary>
+        /// 根据sql语句查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回实体</returns>
+        T FindEntity<T>(string sql, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 根据sql语句查询单个实体
@@ -597,10 +638,18 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询单个实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回实体</returns>
-        Task<T> FindEntityAsync<T>(string sql, params DbParameter[] parameter);
+        Task<T> FindEntityAsync<T>(FormattableString formattableSql);
+
+        /// <summary>
+        /// 根据sql语句查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回实体</returns>
+        Task<T> FindEntityAsync<T>(string sql, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 根据sql语句查询单个实体
@@ -861,10 +910,18 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回集合</returns>
-        IEnumerable<T> FindList<T>(string sql, params DbParameter[] parameter);
+        IEnumerable<T> FindList<T>(FormattableString formattableSql);
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回集合</returns>
+        IEnumerable<T> FindList<T>(string sql, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 根据sql语句查询
@@ -916,25 +973,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        (List<T> list, long total) FindList<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        (List<T> list, long total) FindList<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
 
         /// <summary>
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        (List<T> list, long total) FindListByWith<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        (List<T> list, long total) FindListByWith<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
         #endregion
 
         #region Async
@@ -1026,10 +1083,18 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回集合</returns>
-        Task<IEnumerable<T>> FindListAsync<T>(string sql, params DbParameter[] parameter);
+        Task<IEnumerable<T>> FindListAsync<T>(FormattableString formattableSql);
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回集合</returns>
+        Task<IEnumerable<T>> FindListAsync<T>(string sql, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 根据sql语句查询
@@ -1081,25 +1146,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        Task<(List<T> list, long total)> FindListAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        Task<(List<T> list, long total)> FindListAsync<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
 
         /// <summary>
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        Task<(List<T> list, long total)> FindListByWithAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        Task<(List<T> list, long total)> FindListByWithAsync<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
         #endregion
         #endregion
 
@@ -1115,10 +1180,17 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 根据sql语句查询
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回DataTable</returns>
-        DataTable FindTable(string sql, params DbParameter[] parameter);
+        DataTable FindTable(FormattableString formattableSql);
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回DataTable</returns>
+        DataTable FindTable(string sql, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 根据sql语句查询
@@ -1135,25 +1207,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        (DataTable table, long total) FindTable(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        (DataTable table, long total) FindTable(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
 
         /// <summary>
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        (DataTable table, long total) FindTableByWith(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        (DataTable table, long total) FindTableByWith(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
         #endregion
 
         #region Async
@@ -1167,10 +1239,17 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 根据sql语句查询
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回DataTable</returns>
-        Task<DataTable> FindTableAsync(string sql, params DbParameter[] parameter);
+        Task<DataTable> FindTableAsync(FormattableString formattableSql);
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回DataTable</returns>
+        Task<DataTable> FindTableAsync(string sql, params DbParameter[] dbParameter);
 
         /// <summary>
         /// 根据sql语句查询
@@ -1187,25 +1266,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        Task<(DataTable table, long total)> FindTableAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        Task<(DataTable table, long total)> FindTableAsync(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
 
         /// <summary>
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        Task<(DataTable table, long total)> FindTableByWithAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex);
+        Task<(DataTable table, long total)> FindTableByWithAsync(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex);
         #endregion
         #endregion
 
@@ -1221,10 +1300,17 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 根据sql语句查询返回多个结果集
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果集</returns>
-        List<List<T>> FindMultiple<T>(string sql, params DbParameter[] parameter);
+        List<List<T>> FindMultiple<T>(FormattableString formattableSql);
+
+        /// <summary>
+        /// 根据sql语句查询返回多个结果集
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果集</returns>
+        List<List<T>> FindMultiple<T>(string sql, params DbParameter[] dbParameter);
         #endregion
 
         #region Async
@@ -1238,26 +1324,17 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 根据sql语句查询返回多个结果集
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果集</returns>
-        Task<List<List<T>>> FindMultipleAsync<T>(string sql, params DbParameter[] parameter);
-        #endregion
-        #endregion
+        Task<List<List<T>>> FindMultipleAsync<T>(FormattableString formattableSql);
 
-        #region Close
-        #region Sync
         /// <summary>
-        /// 关闭连接
+        /// 根据sql语句查询返回多个结果集
         /// </summary>
-        void Close();
-        #endregion
-
-        #region Async
-        /// <summary>
-        /// 关闭连接
-        /// </summary>
-        ValueTask CloseAsync();
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果集</returns>
+        Task<List<List<T>>> FindMultipleAsync<T>(string sql, params DbParameter[] dbParameter);
         #endregion
         #endregion
     }

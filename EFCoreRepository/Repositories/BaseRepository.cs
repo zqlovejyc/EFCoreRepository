@@ -117,9 +117,19 @@ namespace EFCoreRepository.Repositories
                 DbContext.Database.UseTransaction(_transaction);
             }
         }
+
+        /// <summary>
+        /// 数据库类型
+        /// </summary>
+        public virtual DatabaseType DatabaseType { get; }
         #endregion
 
         #region Constructor
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        public BaseRepository() { }
+
         /// <summary>
         /// 构造函数
         /// </summary>
@@ -134,22 +144,22 @@ namespace EFCoreRepository.Repositories
         #region Queue
         #region Sync
         /// <summary>
-        /// 同步委托队列(Queue)
+        /// 同步委托队列(SyncQueue)
         /// </summary>
-        public virtual ConcurrentQueue<Func<IRepository, bool>> Queue { get; } = new();
+        public virtual ConcurrentQueue<Func<IRepository, bool>> SyncQueue { get; } = new();
 
         /// <summary>
-        /// 加入同步委托队列(Queue)
+        /// 加入同步委托队列(SyncQueue)
         /// </summary>
         /// <param name="func">自定义委托</param>
         /// <returns></returns>
         public virtual void AddQueue(Func<IRepository, bool> func)
         {
-            Queue.Enqueue(func);
+            SyncQueue.Enqueue(func);
         }
 
         /// <summary>
-        /// 保存同步委托队列(Queue)
+        /// 保存同步委托队列(SyncQueue)
         /// </summary>
         /// <param name="transaction">是否开启事务</param>
         /// <returns></returns>
@@ -157,7 +167,7 @@ namespace EFCoreRepository.Repositories
         {
             try
             {
-                if (Queue.IsEmpty)
+                if (SyncQueue.IsEmpty)
                     return false;
 
                 if (transaction)
@@ -165,7 +175,7 @@ namespace EFCoreRepository.Repositories
 
                 var res = true;
 
-                while (!Queue.IsEmpty && Queue.TryDequeue(out var func))
+                while (!SyncQueue.IsEmpty && SyncQueue.TryDequeue(out var func))
                     res = res && func(this);
 
                 if (transaction)
@@ -467,6 +477,16 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 执行sql语句
         /// </summary>
+        /// <param name="formattableSql">内插sql语句</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual int ExecuteBySql(FormattableString formattableSql)
+        {
+            return DbContext.Database.ExecuteSqlInterpolated(formattableSql);
+        }
+
+        /// <summary>
+        /// 执行sql语句
+        /// </summary>
         /// <param name="sql">sql语句</param>
         /// <param name="parameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
@@ -479,11 +499,11 @@ namespace EFCoreRepository.Repositories
         /// 执行sql存储过程
         /// </summary>
         /// <param name="procName">存储过程名称</param>
-        ///  <param name="parameter">对应参数</param>
+        ///  <param name="dbParameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
-        public virtual int ExecuteByProc(string procName, params DbParameter[] parameter)
+        public virtual int ExecuteByProc(string procName, params DbParameter[] dbParameter)
         {
-            return DbContext.ExecuteProc(procName, parameter);
+            return DbContext.ExecuteProc(procName, dbParameter);
         }
 
         /// <summary>
@@ -491,11 +511,11 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="procName"></param>
-        /// <param name="parameter"></param>
+        /// <param name="dbParameter"></param>
         /// <returns></returns>
-        public virtual IEnumerable<T> ExecuteByProc<T>(string procName, params DbParameter[] parameter)
+        public virtual IEnumerable<T> ExecuteByProc<T>(string procName, params DbParameter[] dbParameter)
         {
-            return DbContext.ExecuteProc<T>(procName, parameter);
+            return DbContext.ExecuteProc<T>(procName, dbParameter);
         }
         #endregion
 
@@ -513,6 +533,16 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 执行sql语句
         /// </summary>
+        /// <param name="formattableSql">内插sql语句</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual async Task<int> ExecuteBySqlAsync(FormattableString formattableSql)
+        {
+            return await DbContext.Database.ExecuteSqlInterpolatedAsync(formattableSql);
+        }
+
+        /// <summary>
+        /// 执行sql语句
+        /// </summary>
         /// <param name="sql">sql语句</param>
         /// <param name="parameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
@@ -525,11 +555,11 @@ namespace EFCoreRepository.Repositories
         /// 执行sql存储过程
         /// </summary>
         /// <param name="procName">存储过程名称</param>
-        ///  <param name="parameter">对应参数</param>
+        ///  <param name="dbParameter">对应参数</param>
         /// <returns>返回受影响行数</returns>
-        public virtual async Task<int> ExecuteByProcAsync(string procName, params DbParameter[] parameter)
+        public virtual async Task<int> ExecuteByProcAsync(string procName, params DbParameter[] dbParameter)
         {
-            return await DbContext.ExecuteProcAsync(procName, parameter);
+            return await DbContext.ExecuteProcAsync(procName, dbParameter);
         }
 
         /// <summary>
@@ -537,11 +567,11 @@ namespace EFCoreRepository.Repositories
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="procName"></param>
-        /// <param name="parameter"></param>
+        /// <param name="dbParameter"></param>
         /// <returns></returns>
-        public virtual async Task<IEnumerable<T>> ExecuteByProcAsync<T>(string procName, params DbParameter[] parameter)
+        public virtual async Task<IEnumerable<T>> ExecuteByProcAsync<T>(string procName, params DbParameter[] dbParameter)
         {
-            return await DbContext.ExecuteProcAsync<T>(procName, parameter);
+            return await DbContext.ExecuteProcAsync<T>(procName, dbParameter);
         }
         #endregion
         #endregion
@@ -985,12 +1015,24 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 查询单个对象
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果对象</returns>
-        public virtual object FindObject(string sql, params DbParameter[] parameter)
+        public virtual object FindObject(FormattableString formattableSql)
         {
-            return DbContext.SqlQuery<Dictionary<string, object>>(sql, parameter)?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return FindObject(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 查询单个对象
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果对象</returns>
+        public virtual object FindObject(string sql, params DbParameter[] dbParameter)
+        {
+            return DbContext.SqlQuery<Dictionary<string, object>>(sql, dbParameter)?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
         }
         #endregion
 
@@ -1008,12 +1050,24 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 查询单个对象
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果对象</returns>
-        public virtual async Task<object> FindObjectAsync(string sql, params DbParameter[] parameter)
+        public virtual async Task<object> FindObjectAsync(FormattableString formattableSql)
         {
-            return (await DbContext.SqlQueryAsync<Dictionary<string, object>>(sql, parameter))?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return await FindObjectAsync(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 查询单个对象
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果对象</returns>
+        public virtual async Task<object> FindObjectAsync(string sql, params DbParameter[] dbParameter)
+        {
+            return (await DbContext.SqlQueryAsync<Dictionary<string, object>>(sql, dbParameter))?.FirstOrDefault()?.Select(o => o.Value).FirstOrDefault();
         }
         #endregion
         #endregion
@@ -1046,12 +1100,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询单个实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回实体</returns>
-        public virtual T FindEntity<T>(string sql, params DbParameter[] parameter)
+        public virtual T FindEntity<T>(FormattableString formattableSql)
         {
-            var query = DbContext.SqlQuery<T>(sql, parameter);
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return FindEntity<T>(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回实体</returns>
+        public virtual T FindEntity<T>(string sql, params DbParameter[] dbParameter)
+        {
+            var query = DbContext.SqlQuery<T>(sql, dbParameter);
             if (query != null)
             {
                 return query.FirstOrDefault();
@@ -1151,12 +1218,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询单个实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回实体</returns>
-        public virtual async Task<T> FindEntityAsync<T>(string sql, params DbParameter[] parameter)
+        public virtual async Task<T> FindEntityAsync<T>(FormattableString formattableSql)
         {
-            var query = await DbContext.SqlQueryAsync<T>(sql, parameter);
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return await FindEntityAsync<T>(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询单个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回实体</returns>
+        public virtual async Task<T> FindEntityAsync<T>(string sql, params DbParameter[] dbParameter)
+        {
+            var query = await DbContext.SqlQueryAsync<T>(sql, dbParameter);
             if (query != null)
             {
                 return query.FirstOrDefault();
@@ -1503,12 +1583,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回集合</returns>
-        public virtual IEnumerable<T> FindList<T>(string sql, params DbParameter[] parameter)
+        public virtual IEnumerable<T> FindList<T>(FormattableString formattableSql)
         {
-            return DbContext.SqlQuery<T>(sql, parameter);
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return FindList<T>(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回集合</returns>
+        public virtual IEnumerable<T> FindList<T>(string sql, params DbParameter[] dbParameter)
+        {
+            return DbContext.SqlQuery<T>(sql, dbParameter);
         }
 
         /// <summary>
@@ -1586,25 +1679,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public virtual (List<T> list, long total) FindList<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual (List<T> list, long total) FindList<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
 
             var type = typeof(T);
             if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
-                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, dbParameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, dbParameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -1613,25 +1706,25 @@ namespace EFCoreRepository.Repositories
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public virtual (List<T> list, long total) FindListByWith<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual (List<T> list, long total) FindListByWith<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
 
             var type = typeof(T);
             if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
-                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<dynamic>(sqlQuery, dbParameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, parameter);
+                var query = DbContext.SqlQueryMultiple<T>(sqlQuery, dbParameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -1753,12 +1846,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回集合</returns>
-        public virtual async Task<IEnumerable<T>> FindListAsync<T>(string sql, params DbParameter[] parameter)
+        public virtual async Task<IEnumerable<T>> FindListAsync<T>(FormattableString formattableSql)
         {
-            return await DbContext.SqlQueryAsync<T>(sql, parameter);
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return await FindListAsync<T>(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回集合</returns>
+        public virtual async Task<IEnumerable<T>> FindListAsync<T>(string sql, params DbParameter[] dbParameter)
+        {
+            return await DbContext.SqlQueryAsync<T>(sql, dbParameter);
         }
 
         /// <summary>
@@ -1835,25 +1941,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public virtual async Task<(List<T> list, long total)> FindListAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual async Task<(List<T> list, long total)> FindListAsync<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
 
             var type = typeof(T);
             if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
-                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, dbParameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, dbParameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -1862,25 +1968,25 @@ namespace EFCoreRepository.Repositories
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回集合和总记录数</returns>
-        public virtual async Task<(List<T> list, long total)> FindListByWithAsync<T>(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual async Task<(List<T> list, long total)> FindListByWithAsync<T>(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
 
             var type = typeof(T);
             if (type.IsClass && !type.IsDictionaryType() && !type.IsDynamicOrObjectType() && !type.IsStringType())
             {
-                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<dynamic>(sqlQuery, dbParameter);
                 return (query.LastOrDefault().Select(o => (o as IDictionary<string, object>).ToEntity<T>()).ToList(), Convert.ToInt64(query.FirstOrDefault().FirstOrDefault().TOTAL ?? 0));
             }
             else
             {
-                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, parameter);
+                var query = await DbContext.SqlQueryMultipleAsync<T>(sqlQuery, dbParameter);
                 return (query.LastOrDefault(), Convert.ToInt64((query.FirstOrDefault().FirstOrDefault() as IDictionary<string, object>)?["TOTAL"] ?? 0));
             }
         }
@@ -1902,12 +2008,24 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 根据sql语句查询
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回DataTable</returns>
-        public virtual DataTable FindTable(string sql, params DbParameter[] parameter)
+        public virtual DataTable FindTable(FormattableString formattableSql)
         {
-            return DbContext.SqlDataTable(sql, parameter);
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return FindTable(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回DataTable</returns>
+        public virtual DataTable FindTable(string sql, params DbParameter[] dbParameter)
+        {
+            return DbContext.SqlDataTable(sql, dbParameter);
         }
 
         /// <summary>
@@ -1928,17 +2046,17 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        public virtual (DataTable table, long total) FindTable(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual (DataTable table, long total) FindTable(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
 
-            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
+            var ds = DbContext.SqlDataSet(sqlQuery, dbParameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
 
@@ -1946,17 +2064,17 @@ namespace EFCoreRepository.Repositories
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        public virtual (DataTable table, long total) FindTableByWith(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual (DataTable table, long total) FindTableByWith(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
 
-            var ds = DbContext.SqlDataSet(sqlQuery, parameter);
+            var ds = DbContext.SqlDataSet(sqlQuery, dbParameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
         #endregion
@@ -1975,12 +2093,24 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 根据sql语句查询
         /// </summary>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回DataTable</returns>
-        public virtual async Task<DataTable> FindTableAsync(string sql, params DbParameter[] parameter)
+        public virtual async Task<DataTable> FindTableAsync(FormattableString formattableSql)
         {
-            return await DbContext.SqlDataTableAsync(sql, parameter);
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return await FindTableAsync(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询
+        /// </summary>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回DataTable</returns>
+        public virtual async Task<DataTable> FindTableAsync(string sql, params DbParameter[] dbParameter)
+        {
+            return await DbContext.SqlDataTableAsync(sql, dbParameter);
         }
 
         /// <summary>
@@ -2001,17 +2131,17 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>
         /// <returns>返回DataTable和总记录数</returns>
-        public virtual async Task<(DataTable table, long total)> FindTableAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual async Task<(DataTable table, long total)> FindTableAsync(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(false, sql, orderField, isAscending, pageSize, pageIndex);
 
-            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, dbParameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
 
@@ -2019,17 +2149,17 @@ namespace EFCoreRepository.Repositories
         /// with语法分页查询
         /// </summary>
         /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="dbParameter">对应参数</param>
         /// <param name="orderField">排序字段</param>
         /// <param name="isAscending">是否升序</param>
         /// <param name="pageSize">每页数量</param>
         /// <param name="pageIndex">当前页码</param>        
         /// <returns>返回DataTable和总记录数</returns>
-        public virtual async Task<(DataTable table, long total)> FindTableByWithAsync(string sql, DbParameter[] parameter, string orderField, bool isAscending, int pageSize, int pageIndex)
+        public virtual async Task<(DataTable table, long total)> FindTableByWithAsync(string sql, DbParameter[] dbParameter, string orderField, bool isAscending, int pageSize, int pageIndex)
         {
             var sqlQuery = GetPageSql(true, sql, orderField, isAscending, pageSize, pageIndex);
 
-            var ds = await DbContext.SqlDataSetAsync(sqlQuery, parameter);
+            var ds = await DbContext.SqlDataSetAsync(sqlQuery, dbParameter);
             return (ds.Tables[1], Convert.ToInt64(ds.Tables[0].Rows[0]["TOTAL"]));
         }
         #endregion
@@ -2052,12 +2182,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询返回多个结果集
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果集</returns>
-        public virtual List<List<T>> FindMultiple<T>(string sql, params DbParameter[] parameter)
+        public virtual List<List<T>> FindMultiple<T>(FormattableString formattableSql)
         {
-            return DbContext.SqlQueryMultiple<T>(sql, parameter);
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
+
+            return FindMultiple<T>(sqlFormat, parameter);
+        }
+
+        /// <summary>
+        /// 根据sql语句查询返回多个结果集
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果集</returns>
+        public virtual List<List<T>> FindMultiple<T>(string sql, params DbParameter[] dbParameter)
+        {
+            return DbContext.SqlQueryMultiple<T>(sql, dbParameter);
         }
         #endregion
 
@@ -2077,36 +2220,25 @@ namespace EFCoreRepository.Repositories
         /// 根据sql语句查询返回多个结果集
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
-        /// <param name="sql">sql语句</param>
-        /// <param name="parameter">对应参数</param>
+        /// <param name="formattableSql">内插sql语句</param>
         /// <returns>返回查询结果集</returns>
-        public virtual async Task<List<List<T>>> FindMultipleAsync<T>(string sql, params DbParameter[] parameter)
+        public virtual async Task<List<List<T>>> FindMultipleAsync<T>(FormattableString formattableSql)
         {
-            return await DbContext.SqlQueryMultipleAsync<T>(sql, parameter);
-        }
-        #endregion
-        #endregion
+            var (sqlFormat, parameter) = formattableSql.ToDbParameter(this.DatabaseType);
 
-        #region Close
-        #region Sync
-        /// <summary>
-        /// 关闭连接
-        /// </summary>
-        public virtual void Close()
-        {
-            DbContext.Database.CloseConnection();
-            DbContext.Dispose();
+            return await FindMultipleAsync<T>(sqlFormat, parameter);
         }
-        #endregion
 
-        #region Async
         /// <summary>
-        /// 关闭连接
+        /// 根据sql语句查询返回多个结果集
         /// </summary>
-        public virtual async ValueTask CloseAsync()
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="sql">sql语句</param>
+        /// <param name="dbParameter">对应参数</param>
+        /// <returns>返回查询结果集</returns>
+        public virtual async Task<List<List<T>>> FindMultipleAsync<T>(string sql, params DbParameter[] dbParameter)
         {
-            await DbContext.Database.CloseConnectionAsync();
-            await DbContext.DisposeAsync();
+            return await DbContext.SqlQueryMultipleAsync<T>(sql, dbParameter);
         }
         #endregion
         #endregion
@@ -2116,7 +2248,14 @@ namespace EFCoreRepository.Repositories
         /// <summary>
         /// 释放资源
         /// </summary>
-        public virtual void Dispose() => Close();
+        public virtual void Dispose()
+        {
+            if (DbContext != null)
+            {
+                DbContext.Database.CloseConnection();
+                DbContext.Dispose();
+            }
+        }
         #endregion
 
         #region Async
@@ -2124,7 +2263,14 @@ namespace EFCoreRepository.Repositories
         /// 释放资源
         /// </summary>
         /// <returns></returns>
-        public virtual async ValueTask DisposeAsync() => await CloseAsync();
+        public virtual async ValueTask DisposeAsync()
+        {
+            if (DbContext != null)
+            {
+                await DbContext.Database.CloseConnectionAsync();
+                await DbContext.DisposeAsync();
+            }
+        }
         #endregion
         #endregion
 

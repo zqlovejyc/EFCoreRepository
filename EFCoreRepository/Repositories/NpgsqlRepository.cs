@@ -16,6 +16,7 @@
  */
 #endregion
 
+using EFCoreRepository.Enums;
 using EFCoreRepository.Extensions;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -33,7 +34,19 @@ namespace EFCoreRepository.Repositories
     /// </summary>
     public class NpgsqlRepository : BaseRepository
     {
+        #region Property
+        /// <summary>
+        /// 数据库类型
+        /// </summary>
+        public override DatabaseType DatabaseType => DatabaseType.PostgreSql;
+        #endregion
+
         #region Constructor
+        /// <summary>
+        /// 构造函数
+        /// </summary>
+        public NpgsqlRepository() { }
+
         /// <summary>
         /// 构造函数
         /// </summary>
