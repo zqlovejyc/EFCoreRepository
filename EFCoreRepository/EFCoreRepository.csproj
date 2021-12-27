@@ -36,7 +36,6 @@
         <RepositoryUrl>https://github.com/zqlovejyc/EFCoreRepository</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <LangVersion>latest</LangVersion>
-	    <!--<NoWarn>$(NoWarn);NU1608</NoWarn>-->
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -47,28 +46,27 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.12" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.12" />
-		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="5.0.2" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.10" />
-		<PackageReference Include="Oracle.EntityFrameworkCore" Version="5.21.4" />
 		<PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.1.1">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
     </ItemGroup>
 
-	<!--<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1' or '$(TargetFramework)' == 'net5.0'">
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="5.0.12" />
+	<ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1' or '$(TargetFramework)' == 'net5.0'">
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.13" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.13" />
+		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="5.0.3" />
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="5.0.10" />
+		<PackageReference Include="Oracle.EntityFrameworkCore" Version="5.21.4" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.0" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="6.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.1" />
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.0" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.0" />
-	</ItemGroup>-->
+		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.2" />
+		<PackageReference Include="Oracle.EntityFrameworkCore" Version="6.21.4" />
+	</ItemGroup>
 
     <ItemGroup>
         <None Include="Icon\ef.png">
