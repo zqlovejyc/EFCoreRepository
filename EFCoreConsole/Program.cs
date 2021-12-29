@@ -19,6 +19,7 @@
 using EFCoreRepository.DbContexts;
 using EFCoreRepository.Extensions;
 using EFCoreRepository.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -50,7 +51,7 @@ namespace EFCoreConsole
         public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
         {
             //ef core执行数据库查询时的categoryName为Microsoft.EntityFrameworkCore.Database.Command,日志级别为Information
-            if (categoryName == "Microsoft.EntityFrameworkCore.Database.Command" && logLevel == LogLevel.Information)
+            if (categoryName == DbLoggerCategory.Database.Command.Name && logLevel == LogLevel.Information)
             {
                 var logContent = formatter(state, exception);
                 Console.WriteLine();
