@@ -8,21 +8,22 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>1.1.3</Version>
-		<FileVersion>1.1.3.0</FileVersion>
-		<AssemblyVersion>1.1.3.0</AssemblyVersion>
+        <Version>1.1.4</Version>
+		<FileVersion>1.1.4.0</FileVersion>
+		<AssemblyVersion>1.1.4.0</AssemblyVersion>
         <Authors>张强</Authors>
         <Copyright>Copyright © 2018-2022 , 张强 943620963@qq.com</Copyright>
         <Description>EntityFrameworkCore仓储封装</Description>
-        <PackageReleaseNotes>1.升级nuget依赖引用包到最新版本；
-2.分离各个平台nuget包版本；</PackageReleaseNotes>
+        <PackageReleaseNotes>1.优化OracleRepository支持Oracle12c及以上版本最新FETCH NEXT分页语法；
+2.统一仓储分页语法OrderField位置，修复部分情况下分页必须查询出排序字段的bug；
+3.注意MySql、PostgreSql、Sqlite、SqlServer分页排序逻辑已修改，修复排序字段必须在查询结果中的bug，需注意多表连接查询分页时，必要时需指明排序字段的表别名；</PackageReleaseNotes>
         <PackageId>Zq.EFCoreRepository</PackageId>
         <PackageLicenseUrl></PackageLicenseUrl>
         <PackageProjectUrl>https://github.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
         <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageIcon>ef.png</PackageIcon>
-        <LangVersion>8.0</LangVersion>
+        <LangVersion>latest</LangVersion>
         <PackageTags>entity-framework-core;repository</PackageTags>
         <RepositoryUrl>https://github.com/zqlovejyc/EFCoreRepository</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
