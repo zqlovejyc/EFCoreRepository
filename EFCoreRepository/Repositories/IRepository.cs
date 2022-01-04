@@ -303,6 +303,15 @@ namespace EFCoreRepository.Repositories
         /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
         int Insert<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class;
+
+        /// <summary>
+        /// 插入多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要插入的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        int Insert<T>(List<T> entities, bool saveChanges = true) where T : class;
         #endregion
 
         #region Async
@@ -323,6 +332,15 @@ namespace EFCoreRepository.Repositories
         /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
         Task<int> InsertAsync<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class;
+
+        /// <summary>
+        /// 插入多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要插入的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        Task<int> InsertAsync<T>(List<T> entities, bool saveChanges = true) where T : class;
         #endregion
         #endregion
 
@@ -353,6 +371,15 @@ namespace EFCoreRepository.Repositories
         /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
         int Delete<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class;
+
+        /// <summary>
+        /// 删除多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要删除的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        int Delete<T>(List<T> entities, bool saveChanges = true) where T : class;
 
         /// <summary>
         /// 根据条件删除实体
@@ -401,6 +428,15 @@ namespace EFCoreRepository.Repositories
         Task<int> DeleteAsync<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class;
 
         /// <summary>
+        /// 删除多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要删除的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        Task<int> DeleteAsync<T>(List<T> entities, bool saveChanges = true) where T : class;
+
+        /// <summary>
         /// 根据条件删除实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
@@ -441,6 +477,15 @@ namespace EFCoreRepository.Repositories
         int Update<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class;
 
         /// <summary>
+        /// 更新多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要更新的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        int Update<T>(List<T> entities, bool saveChanges = true) where T : class;
+
+        /// <summary>
         /// 根据条件更新实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
@@ -469,6 +514,15 @@ namespace EFCoreRepository.Repositories
         /// <param name="saveChanges">是否保存更改</param>
         /// <returns>返回受影响行数</returns>
         Task<int> UpdateAsync<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class;
+
+        /// <summary>
+        /// 更新多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要更新的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        Task<int> UpdateAsync<T>(List<T> entities, bool saveChanges = true) where T : class;
 
         /// <summary>
         /// 根据条件更新实体

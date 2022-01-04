@@ -19,6 +19,7 @@
 using EFCoreRepository.Enums;
 using EFCoreRepository.Extensions;
 using EFCoreRepository.Helpers;
+using Force.DeepCloner;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -611,6 +612,18 @@ namespace EFCoreRepository.Repositories
 
             return DbContext.SaveChanges();
         }
+
+        /// <summary>
+        /// 插入多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要插入的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual int Insert<T>(List<T> entities, bool saveChanges = true) where T : class
+        {
+            return Insert(entities.AsEnumerable(), saveChanges);
+        }
         #endregion
 
         #region Async
@@ -646,6 +659,18 @@ namespace EFCoreRepository.Repositories
                 return 0;
 
             return await DbContext.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 插入多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要插入的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual async Task<int> InsertAsync<T>(List<T> entities, bool saveChanges = true) where T : class
+        {
+            return await InsertAsync(entities.AsEnumerable(), saveChanges);
         }
         #endregion
         #endregion
@@ -695,6 +720,18 @@ namespace EFCoreRepository.Repositories
                 return 0;
 
             return DbContext.SaveChanges();
+        }
+
+        /// <summary>
+        /// 删除多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要删除的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual int Delete<T>(List<T> entities, bool saveChanges = true) where T : class
+        {
+            return Delete(entities.AsEnumerable(), saveChanges);
         }
 
         /// <summary>
@@ -772,6 +809,18 @@ namespace EFCoreRepository.Repositories
                 return 0;
 
             return await DbContext.SaveChangesAsync();
+        }
+
+        /// <summary>
+        /// 删除多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要删除的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual async Task<int> DeleteAsync<T>(List<T> entities, bool saveChanges = true) where T : class
+        {
+            return await DeleteAsync(entities.AsEnumerable(), saveChanges);
         }
 
         /// <summary>
@@ -867,6 +916,18 @@ namespace EFCoreRepository.Repositories
         }
 
         /// <summary>
+        /// 更新多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要更新的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual int Update<T>(List<T> entities, bool saveChanges = true) where T : class
+        {
+            return Update(entities, saveChanges);
+        }
+
+        /// <summary>
         /// 根据条件更新实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
@@ -898,7 +959,7 @@ namespace EFCoreRepository.Repositories
                 }
 
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
-                entities.Add(MapperHelper<T, T>.MapTo(entity));
+                entities.Add(entity.DeepClone());
             }
 
             return Update<T>(entities, saveChanges);
@@ -961,6 +1022,18 @@ namespace EFCoreRepository.Repositories
         }
 
         /// <summary>
+        /// 更新多个实体
+        /// </summary>
+        /// <typeparam name="T">泛型类型</typeparam>
+        /// <param name="entities">要更新的实体集合</param>
+        /// <param name="saveChanges">是否保存更改</param>
+        /// <returns>返回受影响行数</returns>
+        public virtual async Task<int> UpdateAsync<T>(List<T> entities, bool saveChanges = true) where T : class
+        {
+            return await UpdateAsync(entities.AsEnumerable(), saveChanges);
+        }
+
+        /// <summary>
         /// 根据条件更新实体
         /// </summary>
         /// <typeparam name="T">泛型类型</typeparam>
@@ -992,7 +1065,7 @@ namespace EFCoreRepository.Repositories
                 }
 
                 //深度拷贝实体，避免列表中所有实体引用地址都相同
-                entities.Add(MapperHelper<T, T>.MapTo(entity));
+                entities.Add(entity.DeepClone());
             }
 
             return await UpdateAsync<T>(entities, saveChanges);
