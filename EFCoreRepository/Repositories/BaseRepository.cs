@@ -941,7 +941,7 @@ namespace EFCoreRepository.Repositories
             var instances = FindList(predicate);
 
             //设置所有状态为未跟踪状态
-            DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
+            DbContext.ChangeTracker.Entries<T>().ForEach(o => o.State = EntityState.Detached);
 
             foreach (var instance in instances)
             {
@@ -1047,7 +1047,7 @@ namespace EFCoreRepository.Repositories
             var instances = await FindListAsync(predicate);
 
             //设置所有状态为未跟踪状态
-            DbContext.ChangeTracker.Entries<T>().ToList().ForEach(o => o.State = EntityState.Detached);
+            DbContext.ChangeTracker.Entries<T>().ForEach(o => o.State = EntityState.Detached);
 
             foreach (var instance in instances)
             {

@@ -17,7 +17,9 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 /****************************
 * [Author] 张强
 * [Date] 2020-10-19
@@ -94,6 +96,41 @@ namespace EFCoreRepository.Extensions
             }
 
             return @this == null ? default : (T)@this;
+        }
+        #endregion
+
+        #region ForEach
+        /// <summary>
+        /// Enumerates for each in this collection.
+        /// </summary>
+        /// <typeparam name="T">Generic type parameter.</typeparam>
+        /// <param name="this">The @this to act on.</param>
+        /// <param name="action">The action.</param>
+        /// <returns>An enumerator that allows foreach to be used to process for each in this collection.</returns>
+        public static IEnumerable<T> ForEach<T>(this IEnumerable<T> @this, Action<T> action)
+        {
+            foreach (var item in @this)
+            {
+                action(item);
+            }
+            return @this;
+        }
+
+        /// <summary>
+        /// Enumerates for each in this collection.
+        /// </summary>
+        /// <typeparam name="T">Generic type parameter.</typeparam>
+        /// <param name="this">The @this to act on.</param>
+        /// <param name="action">The action.</param>
+        /// <returns>An enumerator that allows foreach to be used to process for each in this collection.</returns>
+        public static IEnumerable<T> ForEach<T>(this IEnumerable<T> @this, Action<T, int> action)
+        {
+            var array = @this.ToArray();
+            for (int i = 0; i < array.Length; i++)
+            {
+                action(array[i], i);
+            }
+            return array;
         }
         #endregion
     }
