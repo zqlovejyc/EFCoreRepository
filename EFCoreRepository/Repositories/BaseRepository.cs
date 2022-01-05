@@ -18,8 +18,6 @@
 
 using EFCoreRepository.Enums;
 using EFCoreRepository.Extensions;
-using EFCoreRepository.Helpers;
-using Force.DeepCloner;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -463,6 +461,20 @@ namespace EFCoreRepository.Repositories
         #endregion
         #endregion
 
+        #region UseQueryTrackingBehavior
+        /// <summary>
+        /// 上下文级别设置查询跟踪行为
+        /// </summary>
+        /// <param name="behavior"></param>
+        /// <returns></returns>
+        public virtual IRepository UseQueryTrackingBehavior(QueryTrackingBehavior behavior)
+        {
+            DbContext.ChangeTracker.QueryTrackingBehavior = behavior;
+
+            return this;
+        }
+        #endregion
+
         #region ExecuteBySql
         #region Sync
         /// <summary>
@@ -867,16 +879,39 @@ namespace EFCoreRepository.Repositories
         {
             var entry = DbContext.Entry(entity);
 
-            if (entry.State == EntityState.Detached)
-                DbContext.Attach(entity);
+            var entries = DbContext.ChangeTracker.Entries<T>();
 
             var props = entity.GetType().GetProperties();
+
+            //T类型实体必须包含Key主键特性
+            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+
+            //获取已经附加到上下文的实例
+            var existedEntry = entries.FirstOrDefault(x =>
+                x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+
+            if (entry.State == EntityState.Detached && existedEntry == null)
+                DbContext.Attach(entity);
 
             foreach (var prop in props)
             {
                 //非null且非PrimaryKey
-                if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                    entry.Property(prop.Name).IsModified = true;
+                var propValue = prop.GetValue(entity);
+                var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
+                if (propValue != null && !isPrimaryKey)
+                {
+                    if (existedEntry == null)
+                        entry.Property(prop.Name).IsModified = true;
+                    else
+                    {
+                        existedEntry.Property(prop.Name).CurrentValue = propValue;
+                        existedEntry.Property(prop.Name).IsModified = true;
+                    }
+                }
+                else if (propValue == null && existedEntry != null)
+                {
+                    existedEntry.Property(prop.Name).IsModified = false;
+                }
             }
 
             if (!saveChanges)
@@ -894,18 +929,46 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual int Update<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
+            if (entities == null || !entities.Any())
+                return 0;
+
+            var props = typeof(T).GetProperties();
+
+            //T类型实体必须包含Key主键特性
+            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+
+            var entries = DbContext.ChangeTracker.Entries<T>();
+
             foreach (var entity in entities)
             {
                 var entry = DbContext.Entry(entity);
-                if (entry.State == EntityState.Detached)
+
+                //获取已经附加到上下文的实例
+                var existedEntry = entries.FirstOrDefault(x =>
+                    x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+
+                if (entry.State == EntityState.Detached && existedEntry == null)
                     DbContext.Attach(entity);
 
-                var props = entity.GetType().GetProperties();
                 foreach (var prop in props)
                 {
                     //非null且非PrimaryKey
-                    if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                        entry.Property(prop.Name).IsModified = true;
+                    var propValue = prop.GetValue(entity);
+                    var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
+                    if (propValue != null && !isPrimaryKey)
+                    {
+                        if (existedEntry == null)
+                            entry.Property(prop.Name).IsModified = true;
+                        else
+                        {
+                            existedEntry.Property(prop.Name).CurrentValue = propValue;
+                            existedEntry.Property(prop.Name).IsModified = true;
+                        }
+                    }
+                    else if (propValue == null && existedEntry != null)
+                    {
+                        existedEntry.Property(prop.Name).IsModified = false;
+                    }
                 }
             }
 
@@ -937,32 +1000,29 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual int Update<T>(Expression<Func<T, bool>> predicate, T entity, bool saveChanges = true) where T : class
         {
-            var entities = new List<T>();
-            var instances = FindList(predicate);
+            var entities = FindList(predicate);
 
-            //设置所有状态为未跟踪状态
-            DbContext.ChangeTracker.Entries<T>().ForEach(o => o.State = EntityState.Detached);
+            if (entities == null || !entities.Any())
+                return 0;
 
-            foreach (var instance in instances)
+            var properties = typeof(T).GetProperties();
+
+            //T类型实体必须包含Key主键特性
+            var primaryKeyProp = properties.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+
+            foreach (var item in entities)
             {
-                var properties = typeof(T).GetProperties();
-
                 foreach (var property in properties)
                 {
-                    var isKey = property.GetCustomAttributes(typeof(KeyAttribute), false).Any();
-                    if (isKey)
-                    {
-                        var keyVal = property.GetValue(instance);
-                        if (keyVal != null)
-                            property.SetValue(entity, keyVal);
-                    }
+                    var propValue = property.GetValue(entity);
+                    if (propValue != null)
+                        property.SetValue(item, propValue);
+                    else if (property != primaryKeyProp)
+                        property.SetValue(item, null);
                 }
-
-                //深度拷贝实体，避免列表中所有实体引用地址都相同
-                entities.Add(entity.DeepClone());
             }
 
-            return Update<T>(entities, saveChanges);
+            return Update(entities, saveChanges);
         }
         #endregion
 
@@ -976,15 +1036,41 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> UpdateAsync<T>(T entity, bool saveChanges = true) where T : class
         {
-            DbContext.Set<T>().Attach(entity);
             var entry = DbContext.Entry(entity);
+
+            var entries = DbContext.ChangeTracker.Entries<T>();
+
             var props = entity.GetType().GetProperties();
+
+            //T类型实体必须包含Key主键特性
+            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+
+            //获取已经附加到上下文的实例
+            var existedEntry = entries.FirstOrDefault(x =>
+                x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+
+            if (entry.State == EntityState.Detached && existedEntry == null)
+                DbContext.Attach(entity);
 
             foreach (var prop in props)
             {
                 //非null且非PrimaryKey
-                if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                    entry.Property(prop.Name).IsModified = true;
+                var propValue = prop.GetValue(entity);
+                var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
+                if (propValue != null && !isPrimaryKey)
+                {
+                    if (existedEntry == null)
+                        entry.Property(prop.Name).IsModified = true;
+                    else
+                    {
+                        existedEntry.Property(prop.Name).CurrentValue = propValue;
+                        existedEntry.Property(prop.Name).IsModified = true;
+                    }
+                }
+                else if (propValue == null && existedEntry != null)
+                {
+                    existedEntry.Property(prop.Name).IsModified = false;
+                }
             }
 
             if (!saveChanges)
@@ -1002,16 +1088,46 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> UpdateAsync<T>(IEnumerable<T> entities, bool saveChanges = true) where T : class
         {
+            if (entities == null || !entities.Any())
+                return 0;
+
+            var props = typeof(T).GetProperties();
+
+            //T类型实体必须包含Key主键特性
+            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+
+            var entries = DbContext.ChangeTracker.Entries<T>();
+
             foreach (var entity in entities)
             {
-                DbContext.Set<T>().Attach(entity);
                 var entry = DbContext.Entry(entity);
-                var props = entity.GetType().GetProperties();
+
+                //获取已经附加到上下文的实例
+                var existedEntry = entries.FirstOrDefault(x =>
+                    x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+
+                if (entry.State == EntityState.Detached && existedEntry == null)
+                    DbContext.Attach(entity);
+
                 foreach (var prop in props)
                 {
                     //非null且非PrimaryKey
-                    if (prop.GetValue(entity, null) != null && !entry.Property(prop.Name).Metadata.IsPrimaryKey())
-                        entry.Property(prop.Name).IsModified = true;
+                    var propValue = prop.GetValue(entity);
+                    var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
+                    if (propValue != null && !isPrimaryKey)
+                    {
+                        if (existedEntry == null)
+                            entry.Property(prop.Name).IsModified = true;
+                        else
+                        {
+                            existedEntry.Property(prop.Name).CurrentValue = propValue;
+                            existedEntry.Property(prop.Name).IsModified = true;
+                        }
+                    }
+                    else if (propValue == null && existedEntry != null)
+                    {
+                        existedEntry.Property(prop.Name).IsModified = false;
+                    }
                 }
             }
 
@@ -1043,32 +1159,29 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> UpdateAsync<T>(Expression<Func<T, bool>> predicate, T entity, bool saveChanges = true) where T : class
         {
-            var entities = new List<T>();
-            var instances = await FindListAsync(predicate);
+            var entities = await FindListAsync(predicate);
 
-            //设置所有状态为未跟踪状态
-            DbContext.ChangeTracker.Entries<T>().ForEach(o => o.State = EntityState.Detached);
+            if (entities == null || !entities.Any())
+                return 0;
 
-            foreach (var instance in instances)
+            var properties = typeof(T).GetProperties();
+
+            //T类型实体必须包含Key主键特性
+            var primaryKeyProp = properties.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+
+            foreach (var item in entities)
             {
-                var properties = typeof(T).GetProperties();
-
                 foreach (var property in properties)
                 {
-                    var isKey = property.GetCustomAttributes(typeof(KeyAttribute), false).Any();
-                    if (isKey)
-                    {
-                        var keyVal = property.GetValue(instance);
-                        if (keyVal != null)
-                            property.SetValue(entity, keyVal);
-                    }
+                    var propValue = property.GetValue(entity);
+                    if (propValue != null)
+                        property.SetValue(item, propValue);
+                    else if (property != primaryKeyProp)
+                        property.SetValue(item, null);
                 }
-
-                //深度拷贝实体，避免列表中所有实体引用地址都相同
-                entities.Add(entity.DeepClone());
             }
 
-            return await UpdateAsync<T>(entities, saveChanges);
+            return await UpdateAsync(entities, saveChanges);
         }
         #endregion
         #endregion

@@ -200,6 +200,15 @@ namespace EFCoreRepository.Repositories
         #endregion
         #endregion
 
+        #region UseQueryTrackingBehavior
+        /// <summary>
+        /// 上下文级别设置查询跟踪行为
+        /// </summary>
+        /// <param name="behavior"></param>
+        /// <returns></returns>
+        IRepository UseQueryTrackingBehavior(QueryTrackingBehavior behavior);
+        #endregion
+
         #region ExecuteBySql
         #region Sync
         /// <summary>
