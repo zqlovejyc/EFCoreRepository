@@ -884,11 +884,11 @@ namespace EFCoreRepository.Repositories
             var props = entity.GetType().GetProperties();
 
             //T类型实体必须包含Key主键特性
-            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
 
             //获取已经附加到上下文的实例
             var existedEntry = entries.FirstOrDefault(x =>
-                x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+                !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
 
             if (entry.State == EntityState.Detached && existedEntry == null)
                 DbContext.Attach(entity);
@@ -935,7 +935,7 @@ namespace EFCoreRepository.Repositories
             var props = typeof(T).GetProperties();
 
             //T类型实体必须包含Key主键特性
-            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
 
             var entries = DbContext.ChangeTracker.Entries<T>();
 
@@ -945,7 +945,7 @@ namespace EFCoreRepository.Repositories
 
                 //获取已经附加到上下文的实例
                 var existedEntry = entries.FirstOrDefault(x =>
-                    x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+                    !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
 
                 if (entry.State == EntityState.Detached && existedEntry == null)
                     DbContext.Attach(entity);
@@ -1008,7 +1008,7 @@ namespace EFCoreRepository.Repositories
             var properties = typeof(T).GetProperties();
 
             //T类型实体必须包含Key主键特性
-            var primaryKeyProp = properties.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            var primaryKeyProps = properties.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
 
             foreach (var item in entities)
             {
@@ -1017,7 +1017,7 @@ namespace EFCoreRepository.Repositories
                     var propValue = property.GetValue(entity);
                     if (propValue != null)
                         property.SetValue(item, propValue);
-                    else if (property != primaryKeyProp)
+                    else if (!primaryKeyProps.Any(x => x == property))
                         property.SetValue(item, null);
                 }
             }
@@ -1043,11 +1043,11 @@ namespace EFCoreRepository.Repositories
             var props = entity.GetType().GetProperties();
 
             //T类型实体必须包含Key主键特性
-            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
 
             //获取已经附加到上下文的实例
             var existedEntry = entries.FirstOrDefault(x =>
-                x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+                !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
 
             if (entry.State == EntityState.Detached && existedEntry == null)
                 DbContext.Attach(entity);
@@ -1094,7 +1094,7 @@ namespace EFCoreRepository.Repositories
             var props = typeof(T).GetProperties();
 
             //T类型实体必须包含Key主键特性
-            var primaryKeyProp = props.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
 
             var entries = DbContext.ChangeTracker.Entries<T>();
 
@@ -1104,7 +1104,7 @@ namespace EFCoreRepository.Repositories
 
                 //获取已经附加到上下文的实例
                 var existedEntry = entries.FirstOrDefault(x =>
-                    x.Property(primaryKeyProp.Name).CurrentValue.ToString() == primaryKeyProp.GetValue(entity).ToString());
+                    !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
 
                 if (entry.State == EntityState.Detached && existedEntry == null)
                     DbContext.Attach(entity);
@@ -1167,7 +1167,7 @@ namespace EFCoreRepository.Repositories
             var properties = typeof(T).GetProperties();
 
             //T类型实体必须包含Key主键特性
-            var primaryKeyProp = properties.First(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            var primaryKeyProps = properties.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
 
             foreach (var item in entities)
             {
@@ -1176,7 +1176,7 @@ namespace EFCoreRepository.Repositories
                     var propValue = property.GetValue(entity);
                     if (propValue != null)
                         property.SetValue(item, propValue);
-                    else if (property != primaryKeyProp)
+                    else if (!primaryKeyProps.Any(x => x == property))
                         property.SetValue(item, null);
                 }
             }
