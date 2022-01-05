@@ -28,6 +28,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace EFCoreConsole
 {
@@ -83,7 +84,7 @@ namespace EFCoreConsole
         /// Main
         /// </summary>
         /// <param name="args"></param>
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -107,7 +108,7 @@ namespace EFCoreConsole
             var provider = services.BuildServiceProvider();
             var handler = provider.GetService<Func<string, IRepository>>();
             var repo = handler("MySqlTest");
-            var result = repo.FindList<Student>(x => x.Id == "1", x => x.CreateDate, 10, 1);
+            var result = await repo.FindListAsync<Student>(x => x.Id == "1", x => x.CreateDate, 10, 1);
             Console.WriteLine(JsonConvert.SerializeObject(result));
 
             Console.WriteLine($"------------------------------------完成------------------------------------");
