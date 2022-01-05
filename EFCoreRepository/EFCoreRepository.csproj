@@ -8,15 +8,17 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>1.1.4</Version>
-		<FileVersion>1.1.4.0</FileVersion>
-		<AssemblyVersion>1.1.4.0</AssemblyVersion>
+        <Version>1.1.5</Version>
+		<FileVersion>1.1.5.0</FileVersion>
+		<AssemblyVersion>1.1.5.0</AssemblyVersion>
         <Authors>张强</Authors>
         <Copyright>Copyright © 2018-2022 , 张强 943620963@qq.com</Copyright>
         <Description>EntityFrameworkCore仓储封装</Description>
-        <PackageReleaseNotes>1.优化OracleRepository支持Oracle12c及以上版本最新FETCH NEXT分页语法；
-2.统一仓储分页语法OrderField位置，修复部分情况下分页必须查询出排序字段的bug；
-3.注意MySql、PostgreSql、Sqlite、SqlServer分页排序逻辑已修改，修复排序字段必须在查询结果中的bug，需注意多表连接查询分页时，必要时需指明排序字段的表别名；</PackageReleaseNotes>
+        <PackageReleaseNotes>1.移除MapperHelper；
+2.重载Insert、Delete、Update接口；
+3.新增ForEach扩展方法；
+4.新增UseQueryTrackingBehavior接口方法；
+5.优化Update方法；</PackageReleaseNotes>
         <PackageId>Zq.EFCoreRepository</PackageId>
         <PackageLicenseUrl></PackageLicenseUrl>
         <PackageProjectUrl>https://github.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
