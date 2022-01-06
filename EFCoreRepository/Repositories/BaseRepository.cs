@@ -992,7 +992,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual int Update<T>(List<T> entities, bool saveChanges = true) where T : class
         {
-            return Update(entities, saveChanges);
+            return Update(entities.AsEnumerable(), saveChanges);
         }
 
         /// <summary>
