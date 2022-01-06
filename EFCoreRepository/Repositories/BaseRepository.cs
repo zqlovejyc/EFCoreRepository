@@ -876,10 +876,6 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual int Update<T>(T entity, bool saveChanges = true) where T : class
         {
-            var entry = DbContext.Entry(entity);
-
-            var props = entity.GetType().GetProperties();
-
             //获取所有T类型的状态跟踪实例
             var entries = DbContext.ChangeTracker.Entries<T>();
 
@@ -890,27 +886,33 @@ namespace EFCoreRepository.Repositories
             var existedEntry = entries.FirstOrDefault(x =>
                 primaryKeyProps.Any(props => !props.Any(prop => prop.CurrentValue?.ToString() != prop.Metadata.PropertyInfo.GetValue(entity)?.ToString())));
 
+            var entry = DbContext.Entry(entity);
+
             if (entry.State == EntityState.Detached && existedEntry == null)
                 DbContext.Attach(entity);
 
+            //T类型实体属性信息
+            var props = entry.Properties;
+
             foreach (var prop in props)
             {
+                var propInfo = prop.Metadata.PropertyInfo;
+                var propValue = propInfo.GetValue(entity);
+
                 //非null且非PrimaryKey
-                var propValue = prop.GetValue(entity);
-                var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
-                if (propValue != null && !isPrimaryKey)
+                if (propValue != null && !prop.Metadata.IsPrimaryKey())
                 {
                     if (existedEntry == null)
-                        entry.Property(prop.Name).IsModified = true;
+                        entry.Property(propInfo.Name).IsModified = true;
                     else
                     {
-                        existedEntry.Property(prop.Name).CurrentValue = propValue;
-                        existedEntry.Property(prop.Name).IsModified = true;
+                        existedEntry.Property(propInfo.Name).CurrentValue = propValue;
+                        existedEntry.Property(propInfo.Name).IsModified = true;
                     }
                 }
                 else if (propValue == null && existedEntry != null)
                 {
-                    existedEntry.Property(prop.Name).IsModified = false;
+                    existedEntry.Property(propInfo.Name).IsModified = false;
                 }
             }
 
@@ -932,10 +934,11 @@ namespace EFCoreRepository.Repositories
             if (entities == null || !entities.Any())
                 return 0;
 
-            var props = typeof(T).GetProperties();
-
             //获取所有T类型的状态跟踪实例
             var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //T类型实体属性信息
+            var props = entries.First().Properties;
 
             //获取T类型实体的所有主键属性信息
             var primaryKeyProps = entries.Select(x => x.Properties.Where(v => v.Metadata.IsPrimaryKey()));
@@ -953,22 +956,23 @@ namespace EFCoreRepository.Repositories
 
                 foreach (var prop in props)
                 {
+                    var propInfo = prop.Metadata.PropertyInfo;
+                    var propValue = propInfo.GetValue(entity);
+
                     //非null且非PrimaryKey
-                    var propValue = prop.GetValue(entity);
-                    var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
-                    if (propValue != null && !isPrimaryKey)
+                    if (propValue != null && !prop.Metadata.IsPrimaryKey())
                     {
                         if (existedEntry == null)
-                            entry.Property(prop.Name).IsModified = true;
+                            entry.Property(propInfo.Name).IsModified = true;
                         else
                         {
-                            existedEntry.Property(prop.Name).CurrentValue = propValue;
-                            existedEntry.Property(prop.Name).IsModified = true;
+                            existedEntry.Property(propInfo.Name).CurrentValue = propValue;
+                            existedEntry.Property(propInfo.Name).IsModified = true;
                         }
                     }
                     else if (propValue == null && existedEntry != null)
                     {
-                        existedEntry.Property(prop.Name).IsModified = false;
+                        existedEntry.Property(propInfo.Name).IsModified = false;
                     }
                 }
             }
@@ -1006,23 +1010,26 @@ namespace EFCoreRepository.Repositories
             if (entities == null || !entities.Any())
                 return 0;
 
-            var properties = typeof(T).GetProperties();
-
             //获取所有T类型的状态跟踪实例
-            var entries = DbContext.ChangeTracker.Entries<T>();
+            var entry = DbContext.ChangeTracker.Entries<T>().First();
+
+            //T类型实体属性信息
+            var props = entry.Properties;
 
             //获取T类型实体的所有主键属性信息
-            var primaryKeyProps = entries.First().Properties.Where(x => x.Metadata.IsPrimaryKey());
+            var primaryKeyProps = entry.Properties.Where(x => x.Metadata.IsPrimaryKey());
 
             foreach (var item in entities)
             {
-                foreach (var property in properties)
+                foreach (var prop in props)
                 {
-                    var propValue = property.GetValue(entity);
+                    var propInfo = prop.Metadata.PropertyInfo;
+                    var propValue = propInfo.GetValue(entity);
+
                     if (propValue != null)
-                        property.SetValue(item, propValue);
-                    else if (!primaryKeyProps.Any(x => x.Metadata.PropertyInfo == property))
-                        property.SetValue(item, null);
+                        propInfo.SetValue(item, propValue);
+                    else if (!primaryKeyProps.Any(x => x.Metadata.PropertyInfo == propInfo))
+                        propInfo.SetValue(item, null);
                 }
             }
 
@@ -1040,11 +1047,7 @@ namespace EFCoreRepository.Repositories
         /// <returns>返回受影响行数</returns>
         public virtual async Task<int> UpdateAsync<T>(T entity, bool saveChanges = true) where T : class
         {
-            var entry = DbContext.Entry(entity);
-
-            var props = entity.GetType().GetProperties();
-
-            //获取T类型实体的所有主键属性信息
+            //获取所有T类型的状态跟踪实例
             var entries = DbContext.ChangeTracker.Entries<T>();
 
             //获取T类型实体的所有主键属性信息
@@ -1054,27 +1057,33 @@ namespace EFCoreRepository.Repositories
             var existedEntry = entries.FirstOrDefault(x =>
                 primaryKeyProps.Any(props => !props.Any(prop => prop.CurrentValue?.ToString() != prop.Metadata.PropertyInfo.GetValue(entity)?.ToString())));
 
+            var entry = DbContext.Entry(entity);
+
             if (entry.State == EntityState.Detached && existedEntry == null)
                 DbContext.Attach(entity);
 
+            //T类型实体属性信息
+            var props = entry.Properties;
+
             foreach (var prop in props)
             {
+                var propInfo = prop.Metadata.PropertyInfo;
+                var propValue = propInfo.GetValue(entity);
+
                 //非null且非PrimaryKey
-                var propValue = prop.GetValue(entity);
-                var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
-                if (propValue != null && !isPrimaryKey)
+                if (propValue != null && !prop.Metadata.IsPrimaryKey())
                 {
                     if (existedEntry == null)
-                        entry.Property(prop.Name).IsModified = true;
+                        entry.Property(propInfo.Name).IsModified = true;
                     else
                     {
-                        existedEntry.Property(prop.Name).CurrentValue = propValue;
-                        existedEntry.Property(prop.Name).IsModified = true;
+                        existedEntry.Property(propInfo.Name).CurrentValue = propValue;
+                        existedEntry.Property(propInfo.Name).IsModified = true;
                     }
                 }
                 else if (propValue == null && existedEntry != null)
                 {
-                    existedEntry.Property(prop.Name).IsModified = false;
+                    existedEntry.Property(propInfo.Name).IsModified = false;
                 }
             }
 
@@ -1096,10 +1105,11 @@ namespace EFCoreRepository.Repositories
             if (entities == null || !entities.Any())
                 return 0;
 
-            var props = typeof(T).GetProperties();
-
             //获取所有T类型的状态跟踪实例
             var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //T类型实体属性信息
+            var props = entries.First().Properties;
 
             //获取T类型实体的所有主键属性信息
             var primaryKeyProps = entries.Select(x => x.Properties.Where(v => v.Metadata.IsPrimaryKey()));
@@ -1117,22 +1127,23 @@ namespace EFCoreRepository.Repositories
 
                 foreach (var prop in props)
                 {
+                    var propInfo = prop.Metadata.PropertyInfo;
+                    var propValue = propInfo.GetValue(entity);
+
                     //非null且非PrimaryKey
-                    var propValue = prop.GetValue(entity);
-                    var isPrimaryKey = entry.Property(prop.Name).Metadata.IsPrimaryKey();
-                    if (propValue != null && !isPrimaryKey)
+                    if (propValue != null && !prop.Metadata.IsPrimaryKey())
                     {
                         if (existedEntry == null)
-                            entry.Property(prop.Name).IsModified = true;
+                            entry.Property(propInfo.Name).IsModified = true;
                         else
                         {
-                            existedEntry.Property(prop.Name).CurrentValue = propValue;
-                            existedEntry.Property(prop.Name).IsModified = true;
+                            existedEntry.Property(propInfo.Name).CurrentValue = propValue;
+                            existedEntry.Property(propInfo.Name).IsModified = true;
                         }
                     }
                     else if (propValue == null && existedEntry != null)
                     {
-                        existedEntry.Property(prop.Name).IsModified = false;
+                        existedEntry.Property(propInfo.Name).IsModified = false;
                     }
                 }
             }
@@ -1170,23 +1181,26 @@ namespace EFCoreRepository.Repositories
             if (entities == null || !entities.Any())
                 return 0;
 
-            var properties = typeof(T).GetProperties();
-
             //获取所有T类型的状态跟踪实例
-            var entries = DbContext.ChangeTracker.Entries<T>();
+            var entry = DbContext.ChangeTracker.Entries<T>().First();
+
+            //T类型实体属性信息
+            var props = entry.Properties;
 
             //获取T类型实体的所有主键属性信息
-            var primaryKeyProps = entries.First().Properties.Where(x => x.Metadata.IsPrimaryKey());
+            var primaryKeyProps = entry.Properties.Where(x => x.Metadata.IsPrimaryKey());
 
             foreach (var item in entities)
             {
-                foreach (var property in properties)
+                foreach (var prop in props)
                 {
-                    var propValue = property.GetValue(entity);
+                    var propInfo = prop.Metadata.PropertyInfo;
+                    var propValue = propInfo.GetValue(entity);
+
                     if (propValue != null)
-                        property.SetValue(item, propValue);
-                    else if (!primaryKeyProps.Any(x => x.Metadata.PropertyInfo == property))
-                        property.SetValue(item, null);
+                        propInfo.SetValue(item, propValue);
+                    else if (!primaryKeyProps.Any(x => x.Metadata.PropertyInfo == propInfo))
+                        propInfo.SetValue(item, null);
                 }
             }
 
