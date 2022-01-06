@@ -23,7 +23,6 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Data;
 using System.Data.Common;
 using System.Linq;
@@ -879,16 +878,17 @@ namespace EFCoreRepository.Repositories
         {
             var entry = DbContext.Entry(entity);
 
-            var entries = DbContext.ChangeTracker.Entries<T>();
-
             var props = entity.GetType().GetProperties();
 
-            //T类型实体必须包含Key主键特性
-            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            //获取所有T类型的状态跟踪实例
+            var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //获取T类型实体的所有主键属性信息
+            var primaryKeyProps = entries.Select(x => x.Properties.Where(v => v.Metadata.IsPrimaryKey()));
 
             //获取已经附加到上下文的实例
             var existedEntry = entries.FirstOrDefault(x =>
-                !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
+                primaryKeyProps.Any(props => !props.Any(prop => prop.CurrentValue?.ToString() != prop.Metadata.PropertyInfo.GetValue(entity)?.ToString())));
 
             if (entry.State == EntityState.Detached && existedEntry == null)
                 DbContext.Attach(entity);
@@ -934,10 +934,11 @@ namespace EFCoreRepository.Repositories
 
             var props = typeof(T).GetProperties();
 
-            //T类型实体必须包含Key主键特性
-            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
-
+            //获取所有T类型的状态跟踪实例
             var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //获取T类型实体的所有主键属性信息
+            var primaryKeyProps = entries.Select(x => x.Properties.Where(v => v.Metadata.IsPrimaryKey()));
 
             foreach (var entity in entities)
             {
@@ -945,7 +946,7 @@ namespace EFCoreRepository.Repositories
 
                 //获取已经附加到上下文的实例
                 var existedEntry = entries.FirstOrDefault(x =>
-                    !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
+                    primaryKeyProps.Any(props => !props.Any(prop => prop.CurrentValue?.ToString() != prop.Metadata.PropertyInfo.GetValue(entity)?.ToString())));
 
                 if (entry.State == EntityState.Detached && existedEntry == null)
                     DbContext.Attach(entity);
@@ -1007,8 +1008,11 @@ namespace EFCoreRepository.Repositories
 
             var properties = typeof(T).GetProperties();
 
-            //T类型实体必须包含Key主键特性
-            var primaryKeyProps = properties.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            //获取所有T类型的状态跟踪实例
+            var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //获取T类型实体的所有主键属性信息
+            var primaryKeyProps = entries.First().Properties.Where(x => x.Metadata.IsPrimaryKey());
 
             foreach (var item in entities)
             {
@@ -1017,7 +1021,7 @@ namespace EFCoreRepository.Repositories
                     var propValue = property.GetValue(entity);
                     if (propValue != null)
                         property.SetValue(item, propValue);
-                    else if (!primaryKeyProps.Any(x => x == property))
+                    else if (!primaryKeyProps.Any(x => x.Metadata.PropertyInfo == property))
                         property.SetValue(item, null);
                 }
             }
@@ -1038,16 +1042,17 @@ namespace EFCoreRepository.Repositories
         {
             var entry = DbContext.Entry(entity);
 
-            var entries = DbContext.ChangeTracker.Entries<T>();
-
             var props = entity.GetType().GetProperties();
 
-            //T类型实体必须包含Key主键特性
-            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            //获取T类型实体的所有主键属性信息
+            var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //获取T类型实体的所有主键属性信息
+            var primaryKeyProps = entries.Select(x => x.Properties.Where(v => v.Metadata.IsPrimaryKey()));
 
             //获取已经附加到上下文的实例
             var existedEntry = entries.FirstOrDefault(x =>
-                !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
+                primaryKeyProps.Any(props => !props.Any(prop => prop.CurrentValue?.ToString() != prop.Metadata.PropertyInfo.GetValue(entity)?.ToString())));
 
             if (entry.State == EntityState.Detached && existedEntry == null)
                 DbContext.Attach(entity);
@@ -1093,10 +1098,11 @@ namespace EFCoreRepository.Repositories
 
             var props = typeof(T).GetProperties();
 
-            //T类型实体必须包含Key主键特性
-            var primaryKeyProps = props.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
-
+            //获取所有T类型的状态跟踪实例
             var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //获取T类型实体的所有主键属性信息
+            var primaryKeyProps = entries.Select(x => x.Properties.Where(v => v.Metadata.IsPrimaryKey()));
 
             foreach (var entity in entities)
             {
@@ -1104,7 +1110,7 @@ namespace EFCoreRepository.Repositories
 
                 //获取已经附加到上下文的实例
                 var existedEntry = entries.FirstOrDefault(x =>
-                    !primaryKeyProps.Any(prop => x.Property(prop.Name).CurrentValue.ToString() != prop.GetValue(entity).ToString()));
+                    primaryKeyProps.Any(props => !props.Any(prop => prop.CurrentValue?.ToString() != prop.Metadata.PropertyInfo.GetValue(entity)?.ToString())));
 
                 if (entry.State == EntityState.Detached && existedEntry == null)
                     DbContext.Attach(entity);
@@ -1166,8 +1172,11 @@ namespace EFCoreRepository.Repositories
 
             var properties = typeof(T).GetProperties();
 
-            //T类型实体必须包含Key主键特性
-            var primaryKeyProps = properties.Where(x => x.GetCustomAttributes(typeof(KeyAttribute), false).Any());
+            //获取所有T类型的状态跟踪实例
+            var entries = DbContext.ChangeTracker.Entries<T>();
+
+            //获取T类型实体的所有主键属性信息
+            var primaryKeyProps = entries.First().Properties.Where(x => x.Metadata.IsPrimaryKey());
 
             foreach (var item in entities)
             {
@@ -1176,7 +1185,7 @@ namespace EFCoreRepository.Repositories
                     var propValue = property.GetValue(entity);
                     if (propValue != null)
                         property.SetValue(item, propValue);
-                    else if (!primaryKeyProps.Any(x => x == property))
+                    else if (!primaryKeyProps.Any(x => x.Metadata.PropertyInfo == property))
                         property.SetValue(item, null);
                 }
             }
