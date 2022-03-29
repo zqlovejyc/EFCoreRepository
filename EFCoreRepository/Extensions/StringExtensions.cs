@@ -93,7 +93,7 @@ namespace EFCoreRepository.Extensions
 
         #region Substring
         /// <summary>
-        /// 从分隔符开始向尾部截取字符串
+        /// 从分隔符开始向尾部截取字符串，不包含分隔符字符串
         /// </summary>
         /// <param name="this">源字符串</param>
         /// <param name="separator">分隔符</param>
