@@ -16,6 +16,7 @@
  */
 #endregion
 
+using System;
 using System.Text.RegularExpressions;
 /****************************
 * [Author] 张强
@@ -101,10 +102,24 @@ namespace EFCoreRepository.Extensions
         /// <returns>string</returns>
         public static string Substring(this string @this, string separator, bool lastIndexOf = true)
         {
-            var start = (lastIndexOf ? @this.LastIndexOf(separator) : @this.IndexOf(separator)) + separator.Length;
-            var length = @this.Length - start;
+            if (@this.IsNullOrEmpty())
+                return string.Empty;
 
-            return @this.Substring(start, length);
+            if (separator.IsNullOrEmpty())
+                return string.Empty;
+
+            var startIndex = lastIndexOf
+                ? @this.LastIndexOf(separator, StringComparison.OrdinalIgnoreCase)
+                : @this.IndexOf(separator, StringComparison.OrdinalIgnoreCase);
+
+            if (startIndex == -1)
+                return string.Empty;
+
+            startIndex += separator.Length;
+
+            var length = @this.Length - startIndex;
+
+            return @this.Substring(startIndex, length);
         }
         #endregion
     }
