@@ -24,6 +24,7 @@ EntityFramework Core实现仓储模式
 
 - Gitee：[https://gitee.com/zqlovejyc/EFCoreRepository](https://gitee.com/zqlovejyc/EFCoreRepository)
 - GitHub：[https://github.com/zqlovejyc/EFCoreRepository](https://github.com/zqlovejyc/EFCoreRepository)
+- GitLab：[https://gitlab.com/zqlovejyc/EFCoreRepository](https://gitlab.com/zqlovejyc/EFCoreRepository)
 - NuGet：[https://www.nuget.org/packages/Zq.EFCoreRepository](https://www.nuget.org/packages/Zq.EFCoreRepository)
 - MyGet：[https://www.myget.org/feed/zq-myget/package/nuget/Zq.EFCoreRepository](https://www.myget.org/feed/zq-myget/package/nuget/Zq.EFCoreRepository)
 
