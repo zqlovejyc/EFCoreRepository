@@ -89,7 +89,7 @@ namespace EFCoreRepository.Helpers
             var types = new List<Type>();
             var assemblies = GetAssemblies(path, filter);
 
-            if (assemblies?.Count() > 0)
+            if (assemblies != null && assemblies.Any())
                 foreach (var assembly in assemblies)
                 {
                     Type[] typeArray = null;

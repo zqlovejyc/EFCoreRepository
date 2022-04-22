@@ -74,7 +74,7 @@ namespace EFCoreRepository.DbContexts
                                     type != typeof(BaseEntity) &&
                                     typeof(BaseEntity).IsAssignableFrom(type));
 
-            if (entityTypes?.Count() > 0)
+            if (entityTypes != null && entityTypes.Any())
             {
                 foreach (var entityType in entityTypes)
                 {
