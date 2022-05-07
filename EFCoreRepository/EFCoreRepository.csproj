@@ -8,14 +8,16 @@
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <Version>1.1.7</Version>
-		<FileVersion>1.1.7.0</FileVersion>
-		<AssemblyVersion>1.1.7.0</AssemblyVersion>
+        <Version>1.1.8</Version>
+		<FileVersion>1.1.8.0</FileVersion>
+		<AssemblyVersion>1.1.8.0</AssemblyVersion>
         <Authors>张强</Authors>
-        <Copyright>Copyright © 2018-2022 , 张强 943620963@qq.com</Copyright>
+        <Copyright>Copyright © 2018-2025 , 张强 943620963@qq.com</Copyright>
         <Description>EntityFrameworkCore仓储封装</Description>
-        <PackageReleaseNotes>1.移除Update方法中反射获取实体属性逻辑；
-2.修复Update同步方法未转换为IEnumerable类型错误bug；</PackageReleaseNotes>
+        <PackageReleaseNotes>1.优化Substring，添加comparisonType参数；
+2.优化GetAssemblies；
+3.重载ToLambda扩展方法；优化ToObject扩展方法；
+4.升级部分nuget包；</PackageReleaseNotes>
         <PackageId>Zq.EFCoreRepository</PackageId>
         <PackageLicenseUrl></PackageLicenseUrl>
         <PackageProjectUrl>https://github.com/zqlovejyc/EFCoreRepository</PackageProjectUrl>
@@ -56,7 +58,7 @@
 		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.4" />
 		<PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="6.0.1" />
 		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="6.0.4" />
-		<PackageReference Include="Oracle.EntityFrameworkCore" Version="6.21.5" />
+		<PackageReference Include="Oracle.EntityFrameworkCore" Version="6.21.61" />
 	</ItemGroup>
 
     <ItemGroup>
