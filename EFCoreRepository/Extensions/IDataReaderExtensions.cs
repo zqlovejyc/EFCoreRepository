@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Dynamic;
 using System.Linq;
-using System.Reflection;
+using EFCoreRepository.FastMember;
 /****************************
 * [Author] 张强
 * [Date] 2020-10-19
@@ -43,11 +43,15 @@ namespace EFCoreRepository.Extensions
         public static DataTable ToDataTable(this IDataReader @this)
         {
             var table = new DataTable();
-            if (@this?.IsClosed == false)
-                using (@this)
-                {
-                    table.Load(@this);
-                }
+
+            if (@this.IsNull() || @this.IsClosed || @this.FieldCount == 0)
+                return table;
+
+            using (@this)
+            {
+                table.Load(@this);
+            }
+
             return table;
         }
 
@@ -59,46 +63,52 @@ namespace EFCoreRepository.Extensions
         /// <returns>DataTable</returns>
         public static DataTable ToDataTable<T>(this List<T> @this)
         {
-            DataTable dt = null;
-            if (@this?.Count > 0)
+            if (@this.IsNullOrEmpty())
+                return default;
+
+            var dt = new DataTable(typeof(T).Name);
+            var type = typeof(T);
+            var first = @this.First();
+            var firstType = first.GetType();
+
+            if (type.IsDictionaryType() || (type.IsDynamicOrObjectType() && firstType.IsDictionaryType()))
             {
-                dt = new DataTable(typeof(T).Name);
-                var type = typeof(T);
-                var first = @this.First();
-                var firstType = first.GetType();
+                var dic = first as IDictionary<string, object>;
 
-                if (type.IsDictionaryType() || (type.IsDynamicOrObjectType() && firstType.IsDictionaryType()))
+                if (dic.IsNullOrEmpty())
+                    return default;
+
+                dt.Columns.AddRange(dic.Select(o => new DataColumn(o.Key, o.Value?.GetType().GetCoreType() ?? typeof(object))).ToArray());
+
+                var dics = @this.Select(o => o as IDictionary<string, object>);
+                foreach (var item in dics)
+                    dt.Rows.Add(item.Select(o => o.Value).ToArray());
+            }
+            else
+            {
+                var accessor = TypeAccessor.Create(firstType);
+                var members = accessor.GetMembers();
+
+                if (members.IsNullOrEmpty())
+                    return default;
+
+                foreach (var member in members)
+                    dt.Columns.Add(member.Name, member.Type.GetCoreType());
+
+                foreach (var item in @this)
                 {
-                    var dic = first as IDictionary<string, object>;
-                    dt.Columns.AddRange(dic.Select(o => new DataColumn(o.Key, o.Value?.GetType().GetCoreType() ?? typeof(object))).ToArray());
-
-                    var dics = @this.Select(o => o as IDictionary<string, object>);
-                    foreach (var item in dics)
-                        dt.Rows.Add(item.Select(o => o.Value).ToArray());
-                }
-                else
-                {
-                    var props = type.IsDynamicOrObjectType()
-                        ? firstType.GetProperties()
-                        : typeof(T).GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
-
-                    foreach (var prop in props)
-                        dt.Columns.Add(prop.Name, prop?.PropertyType.GetCoreType() ?? typeof(object));
-
-                    foreach (var item in @this)
+                    var values = new object[members.Count];
+                    for (var i = 0; i < members.Count; i++)
                     {
-                        var values = new object[props.Length];
-                        for (var i = 0; i < props.Length; i++)
-                        {
-                            if (!props[i].CanRead)
-                                continue;
+                        if (!members[i].CanRead)
+                            continue;
 
-                            values[i] = props[i].GetValue(item, null);
-                        }
-                        dt.Rows.Add(values);
+                        values[i] = accessor[item, members[i].Name];
                     }
+                    dt.Rows.Add(values);
                 }
             }
+
             return dt;
         }
         #endregion
@@ -112,32 +122,33 @@ namespace EFCoreRepository.Extensions
         public static DataSet ToDataSet(this IDataReader @this)
         {
             var ds = new DataSet();
-            if (@this?.IsClosed == false)
-                using (@this)
+
+            if (@this.IsNull() || @this.IsClosed || @this.FieldCount == 0)
+                return ds;
+
+            using (@this)
+            {
+                do
                 {
-                    do
+                    var schemaTable = @this.GetSchemaTable();
+                    var dt = new DataTable();
+                    for (var i = 0; i < schemaTable.Rows.Count; i++)
                     {
-                        var schemaTable = @this.GetSchemaTable();
-                        var dt = new DataTable();
-
-                        for (var i = 0; i < schemaTable.Rows.Count; i++)
-                        {
-                            var row = schemaTable.Rows[i];
-                            dt.Columns.Add(new DataColumn((string)row["ColumnName"], (Type)row["DataType"]));
-                        }
-
-                        while (@this.Read())
-                        {
-                            var dataRow = dt.NewRow();
-                            for (var i = 0; i < @this.FieldCount; i++)
-                                dataRow[i] = @this.GetValue(i);
-                            dt.Rows.Add(dataRow);
-                        }
-
-                        ds.Tables.Add(dt);
+                        var row = schemaTable.Rows[i];
+                        dt.Columns.Add(new DataColumn((string)row["ColumnName"], (Type)row["DataType"]));
                     }
-                    while (@this.NextResult());
+                    while (@this.Read())
+                    {
+                        var dataRow = dt.NewRow();
+                        for (var i = 0; i < @this.FieldCount; i++)
+                            dataRow[i] = @this.GetValue(i);
+                        dt.Rows.Add(dataRow);
+                    }
+                    ds.Tables.Add(dt);
                 }
+                while (@this.NextResult());
+            }
+
             return ds;
         }
         #endregion
@@ -162,19 +173,21 @@ namespace EFCoreRepository.Extensions
         {
             var res = new List<dynamic>();
 
-            if (@this?.IsClosed == false)
-                using (@this)
+            if (@this.IsNull() || @this.IsClosed || @this.FieldCount == 0)
+                return res;
+
+            using (@this)
+            {
+                while (@this.Read())
                 {
-                    while (@this.Read())
-                    {
-                        var row = new Dictionary<string, object>();
+                    var row = new Dictionary<string, object>();
 
-                        for (var i = 0; i < @this.FieldCount; i++)
-                            row.Add(@this.GetName(i), @this.GetValue(i));
+                    for (var i = 0; i < @this.FieldCount; i++)
+                        row.Add(@this.GetName(i), @this.GetValue(i));
 
-                        res.Add(row);
-                    }
+                    res.Add(row);
                 }
+            }
 
             return res;
         }
@@ -198,53 +211,24 @@ namespace EFCoreRepository.Extensions
         /// <returns>Dictionary集合</returns>
         public static IEnumerable<Dictionary<string, object>> ToDictionaries(this IDataReader @this)
         {
-            if (@this?.IsClosed == false)
-                using (@this)
-                {
-                    while (@this.Read())
-                    {
-                        var dic = new Dictionary<string, object>();
-                        for (var i = 0; i < @this.FieldCount; i++)
-                            dic[@this.GetName(i)] = @this.GetValue(i);
+            if (@this.IsNull() || @this.IsClosed || @this.FieldCount == 0)
+                yield break;
 
-                        yield return dic;
-                    }
+            using (@this)
+            {
+                while (@this.Read())
+                {
+                    var dic = new Dictionary<string, object>();
+                    for (var i = 0; i < @this.FieldCount; i++)
+                        dic[@this.GetName(i)] = @this.GetValue(i);
+
+                    yield return dic;
                 }
+            }
         }
         #endregion
 
         #region ToEntity
-        /// <summary>
-        /// IDictionary数据转为强类型实体
-        /// </summary>
-        /// <param name="this">IDictionary数据源</param>
-        /// <returns>强类型实体</returns>
-        public static T ToEntity<T>(this IDictionary<string, object> @this)
-        {
-            if (@this?.Count > 0)
-            {
-                var fields = new List<string>();
-                for (int i = 0; i < @this.Keys.Count; i++)
-                    fields.Add(@this.Keys.ElementAt(i));
-
-                var instance = Activator.CreateInstance<T>();
-                var props = instance.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
-
-                foreach (var p in props)
-                {
-                    if (!p.CanWrite)
-                        continue;
-
-                    var field = fields.Where(o => o.ToLower() == p.Name.ToLower()).FirstOrDefault();
-                    if (!field.IsNullOrEmpty() && !@this[field].IsNull())
-                        p.SetValue(instance, @this[field].ToSafeValue(p.PropertyType), null);
-                }
-
-                return instance;
-            }
-            return default;
-        }
-
         /// <summary>
         /// IDataReader数据转为强类型实体
         /// </summary>
@@ -260,35 +244,101 @@ namespace EFCoreRepository.Extensions
         }
 
         /// <summary>
+        /// IDictionary数据转为强类型实体
+        /// </summary>
+        /// <param name="this">IDictionary数据源</param>
+        /// <returns>强类型实体</returns>
+        public static T ToEntity<T>(this IDictionary<string, object> @this)
+        {
+            if (@this.IsNullOrEmpty())
+                return default;
+
+            var accessor = TypeAccessor.Create(typeof(T));
+            var members = accessor.GetMembers();
+
+            if (members.IsNullOrEmpty())
+                return default;
+
+            var memberMap = members.ToDictionary(k => k.Name, v => v, StringComparer.OrdinalIgnoreCase);
+
+            if (accessor.CreateNew() is T instance)
+            {
+                foreach (var key in @this.Keys)
+                {
+                    if (key.IsNullOrEmpty())
+                        continue;
+
+                    var keyValue = @this[key];
+
+                    if (keyValue.IsNull())
+                        continue;
+
+                    if (memberMap.TryGetValue(key, out var member))
+                    {
+                        if (!member.CanWrite)
+                            continue;
+
+                        accessor[instance, member.Name] = key.ToSafeValue(member.Type);
+                    }
+                }
+
+                return instance;
+            }
+
+            return default;
+        }
+
+        /// <summary>
         /// IDataReader数据转为强类型实体集合
         /// </summary>
         /// <param name="this">IDataReader数据源</param>
         /// <returns>强类型实体集合</returns>
         public static IEnumerable<T> ToEntities<T>(this IDataReader @this)
         {
-            if (@this?.IsClosed == false)
-                using (@this)
-                {
-                    var fields = new List<string>();
-                    for (int i = 0; i < @this.FieldCount; i++)
-                        fields.Add(@this.GetName(i));
+            if (@this.IsNull() || @this.IsClosed || @this.FieldCount == 0)
+                yield break;
 
-                    while (@this.Read())
+            using (@this)
+            {
+                var fields = new List<string>();
+                for (int i = 0; i < @this.FieldCount; i++)
+                    fields.Add(@this.GetName(i));
+
+                var accessor = TypeAccessor.Create(typeof(T));
+                var members = accessor.GetMembers();
+
+                if (members.IsNullOrEmpty())
+                    yield break;
+
+                var memberMap = members.ToDictionary(k => k.Name, v => v, StringComparer.OrdinalIgnoreCase);
+
+                while (@this.Read())
+                {
+                    if (accessor.CreateNew() is T instance)
                     {
-                        var instance = Activator.CreateInstance<T>();
-                        var props = instance.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
-                        foreach (var p in props)
+                        foreach (var field in fields)
                         {
-                            if (!p.CanWrite)
+                            if (field.IsNullOrEmpty())
                                 continue;
 
-                            var field = fields.Where(o => o.ToLower() == p.Name.ToLower()).FirstOrDefault();
-                            if (!field.IsNullOrEmpty() && !@this[field].IsNull())
-                                p.SetValue(instance, @this[field].ToSafeValue(p.PropertyType), null);
+                            var fieldValue = @this[field];
+
+                            if (fieldValue.IsNull())
+                                continue;
+
+                            if (memberMap.TryGetValue(field, out var member))
+                            {
+                                if (!member.CanWrite)
+                                    continue;
+
+                                accessor[instance, member.Name] = fieldValue.ToSafeValue(member.Type);
+                            }
                         }
+
                         yield return instance;
                     }
                 }
+            }
         }
         #endregion
 
@@ -301,31 +351,32 @@ namespace EFCoreRepository.Extensions
         /// <returns>T类型集合</returns>
         public static List<T> ToList<T>(this IDataReader @this)
         {
+            if (@this.IsNull() || @this.IsClosed || @this.FieldCount == 0)
+                return default;
+
             List<T> list = null;
-            if (@this?.IsClosed == false)
+            var type = typeof(T);
+            if (type.AssignableTo(typeof(Dictionary<,>)))
+                list = @this.ToDictionaries()?.ToList() as List<T>;
+
+            else if (type.AssignableTo(typeof(IDictionary<,>)))
+                list = @this.ToDictionaries()?.Select(o => o as IDictionary<string, object>).ToList() as List<T>;
+
+            else if (type.IsClass && !type.IsDynamicOrObjectType() && !type.IsStringType())
+                list = @this.ToEntities<T>()?.ToList() as List<T>;
+
+            else
             {
-                var type = typeof(T);
-                if (type.AssignableTo(typeof(Dictionary<,>)))
-                    list = @this.ToDictionaries()?.ToList() as List<T>;
-
-                else if (type.AssignableTo(typeof(IDictionary<,>)))
-                    list = @this.ToDictionaries()?.Select(o => o as IDictionary<string, object>).ToList() as List<T>;
-
-                else if (type.IsClass && !type.IsDynamicOrObjectType() && !type.IsStringType())
-                    list = @this.ToEntities<T>()?.ToList() as List<T>;
-
-                else
+                var result = @this.ToDynamics();
+                if (result != null && result.Any())
                 {
-                    var result = @this.ToDynamics();
-                    if (result != null && result.Any())
-                    {
-                        list = result.ToList() as List<T>;
-                        if (list == null && (type.IsStringType() || type.IsValueType))
-                            //适合查询单个字段的结果集
-                            list = result.Select(o => (T)(o as IDictionary<string, object>).Select(x => x.Value).FirstOrDefault()).ToList();
-                    }
+                    list = result.ToList() as List<T>;
+                    if (list == null && (type.IsStringType() || type.IsValueType))
+                        //适合查询单个字段的结果集
+                        list = result.Select(o => (T)(o as IDictionary<string, object>).Select(x => x.Value).FirstOrDefault()).ToList();
                 }
             }
+
             return list;
         }
 
@@ -338,83 +389,104 @@ namespace EFCoreRepository.Extensions
         public static List<List<T>> ToLists<T>(this IDataReader @this)
         {
             var result = new List<List<T>>();
-            if (@this?.IsClosed == false)
-                using (@this)
+
+            if (@this.IsNull() || @this.IsClosed || @this.FieldCount == 0)
+                return result;
+
+            using (@this)
+            {
+                var type = typeof(T);
+                do
                 {
-                    var type = typeof(T);
-                    do
+                    #region IDictionary
+                    if (type.IsDictionaryType())
                     {
-                        #region IDictionary
-                        if (type.IsDictionaryType())
+                        var list = new List<Dictionary<string, object>>();
+                        while (@this.Read())
                         {
-                            var list = new List<Dictionary<string, object>>();
-                            while (@this.Read())
-                            {
-                                var dic = new Dictionary<string, object>();
-                                for (var i = 0; i < @this.FieldCount; i++)
-                                    dic[@this.GetName(i)] = @this.GetValue(i);
+                            var dic = new Dictionary<string, object>();
+                            for (var i = 0; i < @this.FieldCount; i++)
+                                dic[@this.GetName(i)] = @this.GetValue(i);
 
-                                list.Add(dic);
-                            }
-
-                            if (!type.AssignableTo(typeof(Dictionary<,>)))
-                                result.Add(list.Select(o => o as IDictionary<string, object>).ToList() as List<T>);
-                            else
-                                result.Add(list as List<T>);
+                            list.Add(dic);
                         }
-                        #endregion
 
-                        #region Class T
-                        else if (type.IsClass && !type.IsDynamicOrObjectType() && !type.IsStringType())
+                        if (!type.AssignableTo(typeof(Dictionary<,>)))
+                            result.Add(list.Select(o => o as IDictionary<string, object>).ToList() as List<T>);
+                        else
+                            result.Add(list as List<T>);
+                    }
+                    #endregion
+
+                    #region Class T
+                    else if (type.IsClass && !type.IsDynamicOrObjectType() && !type.IsStringType())
+                    {
+                        var list = new List<T>();
+                        var fields = new List<string>();
+                        for (int i = 0; i < @this.FieldCount; i++)
+                            fields.Add(@this.GetName(i));
+
+                        var accessor = TypeAccessor.Create(type);
+                        var members = accessor.GetMembers();
+
+                        if (members.IsNullOrEmpty())
+                            return result;
+
+                        var memberMap = members.ToDictionary(k => k.Name, v => v, StringComparer.OrdinalIgnoreCase);
+
+                        while (@this.Read())
                         {
-                            var list = new List<T>();
-                            var fields = new List<string>();
-                            for (int i = 0; i < @this.FieldCount; i++)
-                                fields.Add(@this.GetName(i));
-
-                            while (@this.Read())
+                            if (accessor.CreateNew() is T instance)
                             {
-                                var instance = Activator.CreateInstance<T>();
-                                var props = instance.GetType().GetProperties(BindingFlags.GetProperty | BindingFlags.Public | BindingFlags.Instance);
-                                foreach (var p in props)
+                                foreach (var field in fields)
                                 {
-                                    if (!p.CanWrite)
+                                    if (field.IsNullOrEmpty())
                                         continue;
 
-                                    var field = fields.Where(o => o.ToLower() == p.Name.ToLower()).FirstOrDefault();
-                                    if (!field.IsNullOrEmpty() && !@this[field].IsNull())
-                                        p.SetValue(instance, @this[field].ToSafeValue(p.PropertyType), null);
+                                    var fieldValue = @this[field];
+
+                                    if (fieldValue.IsNull())
+                                        continue;
+
+                                    if (memberMap.TryGetValue(field, out var member))
+                                    {
+                                        if (!member.CanWrite)
+                                            continue;
+
+                                        accessor[instance, member.Name] = fieldValue.ToSafeValue(member.Type);
+                                    }
                                 }
 
                                 list.Add(instance);
                             }
-
-                            result.Add(list);
                         }
-                        #endregion
 
-                        #region dynamic
-                        else
+                        result.Add(list);
+                    }
+                    #endregion
+
+                    #region dynamic
+                    else
+                    {
+                        var list = new List<dynamic>();
+                        while (@this.Read())
                         {
-                            var list = new List<dynamic>();
-                            while (@this.Read())
-                            {
-                                var row = new ExpandoObject() as IDictionary<string, object>;
-                                for (var i = 0; i < @this.FieldCount; i++)
-                                    row.Add(@this.GetName(i), @this.GetValue(i));
+                            var row = new ExpandoObject() as IDictionary<string, object>;
+                            for (var i = 0; i < @this.FieldCount; i++)
+                                row.Add(@this.GetName(i), @this.GetValue(i));
 
-                                list.Add(row);
-                            }
-                            var item = list as List<T>;
-                            if (item == null && (type.IsStringType() || type.IsValueType))
-                                //适合查询单个字段的结果集
-                                item = list.Select(o => (T)(o as IDictionary<string, object>).Select(x => x.Value).FirstOrDefault()).ToList();
-
-                            result.Add(item);
+                            list.Add(row);
                         }
-                        #endregion
-                    } while (@this.NextResult());
-                }
+                        var item = list as List<T>;
+                        if (item == null && (type.IsStringType() || type.IsValueType))
+                            //适合查询单个字段的结果集
+                            item = list.Select(o => (T)(o as IDictionary<string, object>).Select(x => x.Value).FirstOrDefault()).ToList();
+
+                        result.Add(item);
+                    }
+                    #endregion
+                } while (@this.NextResult());
+            }
 
             return result;
         }
@@ -430,7 +502,7 @@ namespace EFCoreRepository.Extensions
         public static T ToFirstOrDefault<T>(this IDataReader @this)
         {
             var list = @this.ToList<T>();
-            if (list != null)
+            if (list.IsNotNull())
                 return list.FirstOrDefault();
 
             return default;

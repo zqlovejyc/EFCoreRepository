@@ -42,6 +42,16 @@ namespace EFCoreRepository.Extensions
             @this == null || @this == DBNull.Value;
         #endregion
 
+        #region IsNotNull
+        /// <summary>
+        /// 是否为空
+        /// </summary>
+        /// <param name="this">object对象</param>
+        /// <returns>bool</returns>
+        public static bool IsNotNull(this object @this) =>
+            !@this.IsNull();
+        #endregion
+
         #region ToSafeValue
         /// <summary>
         /// 转换为安全类型的值
