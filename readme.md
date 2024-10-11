@@ -2,7 +2,7 @@
 <p></p>
 
 <p align="center">
-<img src="https://zqlovejyc.gitee.io/zqutils-js/Images/EF.png" height="80"/>
+<img src="https://gitee.com/zqlovejyc/EFCoreRepository/raw/master/EFCoreRepository/Icon/ef.png" height="80"/>
 </p>
 
 <div align="center">
